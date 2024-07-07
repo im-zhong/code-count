@@ -16,6 +16,10 @@
       {
         "command": "code-count.helloWorld",
         "title": "Hello World"
+      },
+      {
+        "command": "code-count.count",
+        "title": "Count"
       }
     ]
   },
