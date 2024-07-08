@@ -149,20 +149,52 @@ export abstract class Analyzer {
       all: 0,
       codes: 0,
       comments: 0,
+      lineClasses: [],
     };
 
     result.all = this.lineClasses.length;
-    for (const lineClass of this.lineClasses) {
-      if (lineClass.testBit(LineClass.Blank)) {
-      }
+
+    let isCode = false;
+    let isComment = false;
+    for (let i = 0; i < this.lineClasses.length; i++) {
+      // for (const [i, lineClass] of this.lineClasses.entries()) {
+      const lineClass = this.lineClasses[i];
+      isCode = false;
+      isComment = false;
+      // if (lineClass.testBit(LineClass.Blank)) {
+      //   result.lineClasses.push(LineClass.Blank);
+      //   continue;
+      // }
+
       if (
         lineClass.testBit(LineClass.LineComment) ||
         lineClass.testBit(LineClass.BlockComment)
       ) {
+        isComment = true;
         result.comments++;
       }
       if (lineClass.testBit(LineClass.Code)) {
+        isCode = true;
         result.codes++;
+      }
+
+      // 三种可能
+      // code comment code&comment
+      // 如何进行区分呢
+      if (isCode && isComment) {
+        result.lineClasses.push(LineClass.CodeComment);
+      } else if (isCode) {
+        result.lineClasses.push(LineClass.Code);
+      } else if (isComment) {
+        result.lineClasses.push(LineClass.Comment);
+      } else {
+        // how could be be here?
+        result.lineClasses.push(LineClass.Blank);
+      }
+
+      // 在这里 i应该和result.lineClasses的长度是一样的
+      if (i !== result.lineClasses.length - 1) {
+        console.log("error");
       }
     }
     return result;
@@ -181,7 +213,7 @@ export abstract class Analyzer {
   findFirstNotBlank(line: string, offset: number): number {
     for (let i = offset; i < line.length; i++) {
       if (!isSpace(line[i])) {
-        return offset;
+        return i;
       }
     }
     return -1;
