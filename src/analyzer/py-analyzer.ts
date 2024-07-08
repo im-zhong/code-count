@@ -1,7 +1,7 @@
 // 2024/7/8
 // zhangzhong
 
-import { Analyzer } from "./interface";
+import { Analyzer } from "./base-analyzer";
 import { LineClass } from "./types";
 
 export class PyAnalyzer extends Analyzer {
@@ -16,7 +16,6 @@ export class PyAnalyzer extends Analyzer {
 
   // overload the block comment check method
   // cause python do not has block comment
-
   isBlockCommentHead(): boolean {
     return false;
   }

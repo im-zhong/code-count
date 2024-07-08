@@ -3,7 +3,7 @@
  *--------------------------------------------------------*/
 
 import * as vscode from "vscode";
-import { makeAnalyzer } from "./analyzer/code-counter";
+import { makeAnalyzer } from "./analyzer/factory";
 import { LineClass } from "./analyzer/types";
 import { Result } from "./analyzer/types";
 

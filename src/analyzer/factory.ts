@@ -2,8 +2,7 @@
 // zhangzhong
 // https://code.visualstudio.com/docs/languages/identifiers
 
-import { Result } from "./types";
-import { Analyzer } from "./interface";
+import { Analyzer } from "./base-analyzer";
 import { PyAnalyzer } from "./py-analyzer";
 import { TsAnalyzer } from "./ts-analyzer";
 
