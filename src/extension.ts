@@ -1,46 +1,64 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
+/*---------------------------------------------------------
+ * Copyright (C) Microsoft Corporation. All rights reserved.
+ *--------------------------------------------------------*/
+
 import * as vscode from "vscode";
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
-  // Use the console to output diagnostic information (console.log) and errors (console.error)
-  // This line of code will only be executed once when your extension is activated
-  console.log('Congratulations, your extension "code-count" is now active!');
+let myStatusBarItem: vscode.StatusBarItem;
 
-  // The command has been defined in the package.json file
-  // Now provide the implementation of the command with registerCommand
-  // The commandId parameter must match the command field in package.json
-  const disposable = vscode.commands.registerCommand(
-    "code-count.helloWorld",
-    () => {
-      // The code you place here will be executed every time your command is executed
-      // Display a message box to the user
-      vscode.window.showInformationMessage("Hello World!");
-    }
+export function activate({ subscriptions }: vscode.ExtensionContext) {
+  // register a command that is invoked when the status bar
+  // item is selected
+  const myCommandId = "sample.showSelectionCount";
+  subscriptions.push(
+    vscode.commands.registerCommand(myCommandId, () => {
+      const n = getNumberOfSelectedLines(vscode.window.activeTextEditor);
+      vscode.window.showInformationMessage(
+        `Yeah, ${n} line(s) selected... Keep going!`
+      );
+    })
   );
 
-  // how to add another command?
-  // 1. add another command in package.json
-  // 2. add another disposable
-  // 3. add disposable to context.subscriptions
-  // 4. add the command implementation
-  // next is the implementation of the countWords command
-  const countWords = vscode.commands.registerCommand("code-count.count", () => {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-      return;
-    }
-    const document = editor.document;
-    const text = document.getText();
-    const words = text.split(/\s+/).length;
-    vscode.window.showInformationMessage(`Words: ${words}`);
-  });
+  // create a new status bar item that we can now manage
+  myStatusBarItem = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Right,
+    100
+  );
+  myStatusBarItem.command = myCommandId;
+  subscriptions.push(myStatusBarItem);
 
-  context.subscriptions.push(disposable);
-  context.subscriptions.push(countWords);
+  // register some listener that make sure the status bar
+  // item always up-to-date
+  subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor(updateStatusBarItem)
+  );
+  subscriptions.push(
+    vscode.window.onDidChangeTextEditorSelection(updateStatusBarItem)
+  );
+
+  // update status bar item once at start
+  updateStatusBarItem();
 }
 
-// This method is called when your extension is deactivated
-export function deactivate() {}
+function updateStatusBarItem(): void {
+  const n = getNumberOfSelectedLines(vscode.window.activeTextEditor);
+  if (n > 0) {
+    myStatusBarItem.text = `$(megaphone) ${n} line(s) selected`;
+    myStatusBarItem.show();
+  } else {
+    myStatusBarItem.hide();
+  }
+}
+
+function getNumberOfSelectedLines(
+  editor: vscode.TextEditor | undefined
+): number {
+  let lines = 0;
+  if (editor) {
+    lines = editor.selections.reduce(
+      (prev, curr) => prev + (curr.end.line - curr.start.line),
+      0
+    );
+  }
+  return lines;
+}
