@@ -2,6 +2,7 @@
   "name": "code-count",
   "displayName": "Code Count",
   "description": "Count your code by lines!",
+  "icon": "assets/icon.png",
   "version": "0.1.0",
   "publisher": "im-zhong",
   "engines": {
