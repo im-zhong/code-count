@@ -4,6 +4,8 @@
 
 import * as vscode from "vscode";
 import { countCode } from "./analyzer/code-counter";
+import { TsAnalyzer } from "./analyzer/ts-analyzer";
+import { Result } from "./analyzer/types";
 
 let myStatusBarItem: vscode.StatusBarItem;
 
@@ -56,8 +58,23 @@ function updateStatusBarItem(): void {
   const documentContent = editor.document.getText();
   const languageId = editor.document.languageId;
   const lineCount = editor.document.lineCount;
-  const result = countCode({ text: documentContent, language: languageId });
+
+  vscode.window.showInformationMessage("starting analyze");
+  const analyzer = new TsAnalyzer({ text: documentContent });
+  const result = analyzer.analyze();
+  vscode.window.showInformationMessage("analyze success!");
+
+  if (!result) {
+    vscode.window.showInformationMessage("analyze failed!");
+    myStatusBarItem.hide();
+    return;
+  }
+
+  // const result = countCode({ text: documentContent, language: languageId });
   result.all = lineCount;
+  vscode.window.showInformationMessage(
+    `Codes: ${result.codes} Comments: ${result.comments} Total: ${result.all}`
+  );
 
   myStatusBarItem.text = `$(megaphone) Codes: ${result.codes} Comments: ${result.comments} Total: ${result.all}`;
   myStatusBarItem.show();

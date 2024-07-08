@@ -70,7 +70,7 @@ function isSpace(char: string): boolean {
 // 我们有必要区分两种注释吗？
 // type LineClass = "code" | "line-comment" | "blank" | "block-comment";
 
-abstract class Analyzer {
+export abstract class Analyzer {
   private result?: Result;
   private lineBegin: number;
   private lineEnd: number;
@@ -85,12 +85,17 @@ abstract class Analyzer {
   // 我们需要给每一行都标上category
   // 最简单的方式就是使用vector
 
-  constructor(
-    lineCommentHead: string,
-    blockCommentHead: string,
-    blockCommentTail: string,
-    text: string
-  ) {
+  constructor({
+    lineCommentHead,
+    blockCommentHead,
+    blockCommentTail,
+    text,
+  }: {
+    lineCommentHead: string;
+    blockCommentHead: string;
+    blockCommentTail: string;
+    text: string;
+  }) {
     this.result = undefined;
     this.lineBegin = 0;
     this.lineEnd = 0;
@@ -102,11 +107,11 @@ abstract class Analyzer {
     this.stringStream = new StringStream(text);
   }
 
-  analyze(): Result {
+  analyze(): Result | null {
     this.init();
 
     let offset = 0;
-    while (this.getLineAndResetOffset()) {
+    while (this.getLineAndResetOffset() !== null) {
       while (
         (offset = this.findFirstNotBlank(
           this.stringStream.getCurrentLine(),
@@ -124,23 +129,53 @@ abstract class Analyzer {
           this.skipBlockComment();
         } else {
           this.setLineClass({
-            lineNo: this.lineEnd,
+            lineNo: this.lineBegin,
             lineClass: LineClass.Code,
           });
           this.stringStream.addToCurrentOffset(1);
         }
       }
-      // 为什么要加这一句话？
+      // to the next line
       this.lineBegin = this.lineEnd;
     }
-    return this.result!;
+
+    // from lineClasses to result
+    return this.toResult();
+  }
+
+  toResult(): Result {
+    const result: Result = {
+      file: "test",
+      all: 0,
+      codes: 0,
+      comments: 0,
+    };
+
+    result.all = this.lineClasses.length;
+    for (const lineClass of this.lineClasses) {
+      if (lineClass.testBit(LineClass.Blank)) {
+      }
+      if (
+        lineClass.testBit(LineClass.LineComment) ||
+        lineClass.testBit(LineClass.BlockComment)
+      ) {
+        result.comments++;
+      }
+      if (lineClass.testBit(LineClass.Code)) {
+        result.codes++;
+      }
+    }
+    return result;
   }
 
   // TODO: 修改成使用stringStream
   getLineAndResetOffset(): string | null {
-    const line = this.stringStream.getNextLine();
-    this.lineClasses.push(new BitVector());
-    return line;
+    if (this.stringStream.getNextLine() !== null) {
+      this.lineEnd++;
+      this.lineClasses.push(new BitVector());
+      return this.stringStream.getCurrentLine();
+    }
+    return null;
   }
 
   findFirstNotBlank(line: string, offset: number): number {
@@ -177,7 +212,7 @@ abstract class Analyzer {
     lineEnd: number;
     lineClass: LineClass;
   }) {
-    for (let i = lineBegin; i <= lineEnd; i++) {
+    for (let i = lineBegin; i < lineEnd; i++) {
       this.setLineClass({ lineNo: i, lineClass });
     }
   }
@@ -232,6 +267,8 @@ abstract class Analyzer {
     );
   }
 
+  // !!!TODO
+  // 所有的skip函数都需要正确的设置offset
   skipUntilFindDelimiter({
     delimiter,
     lineClass,
@@ -356,6 +393,9 @@ abstract class Analyzer {
       this.getLineAndResetOffset();
     }
 
+    // 这里需要设置正确的offset
+    // 所有的skip都需要正确的设置offset
+    this.stringStream.setCurrentOffset(-1);
     this.setMultiLineClass({
       lineBegin: this.lineBegin,
       lineEnd: this.lineEnd,
