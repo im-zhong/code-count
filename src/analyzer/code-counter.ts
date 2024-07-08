@@ -1,12 +1,7 @@
 // 2024/7/8
 // zhangzhong
 
-interface Result {
-  file: string;
-  all: number;
-  codes: number;
-  comments: number;
-}
+import { Result } from "./types";
 
 export function countCode({
   text,
