@@ -3,7 +3,7 @@
  *--------------------------------------------------------*/
 
 import * as vscode from "vscode";
-import { countCode } from "./analyzer/code-counter";
+import { makeAnalyzer } from "./analyzer/code-counter";
 import { TsAnalyzer } from "./analyzer/ts-analyzer";
 import { Result } from "./analyzer/types";
 import { LineClass } from "./analyzer/types";
@@ -60,6 +60,8 @@ function highlightLine({
 export function activate({ subscriptions }: vscode.ExtensionContext) {
   // register a command that is invoked when the status bar
   // item is selected
+
+  // TODO: click the button to toggle showing the backgournd color
   const myCommandId = "sample.showSelectionCount";
   subscriptions.push(
     vscode.commands.registerCommand(myCommandId, () => {
@@ -106,24 +108,32 @@ function updateStatusBarItem(): void {
   const languageId = editor.document.languageId;
   const lineCount = editor.document.lineCount;
 
-  vscode.window.showInformationMessage("starting analyze");
-  const analyzer = new TsAnalyzer({ text: documentContent });
+  // vscode.window.showInformationMessage("starting analyze");
+  const analyzer = makeAnalyzer({ text: documentContent, languageId });
+  if (!analyzer) {
+    // vscode.window.showInformationMessage("analyze failed!");
+    myStatusBarItem.hide();
+    return;
+  }
+  // const analyzer = new TsAnalyzer({ text: documentContent });
   const result = analyzer.analyze();
-  vscode.window.showInformationMessage("analyze success!");
+  // vscode.window.showInformationMessage("analyze success!");
 
   if (!result) {
-    vscode.window.showInformationMessage("analyze failed!");
+    // vscode.window.showInformationMessage("analyze failed!");
     myStatusBarItem.hide();
     return;
   }
 
   // const result = countCode({ text: documentContent, language: languageId });
   result.all = lineCount;
-  vscode.window.showInformationMessage(
-    `Codes: ${result.codes} Comments: ${result.comments} Total: ${result.all}`
-  );
+  const codePercentage = Math.round((result.codes / result.all) * 100);
+  const commentPercentage = Math.round((result.comments / result.all) * 100);
+  // vscode.window.showInformationMessage(
+  //   `Codes: ${result.codes}(${codePercentage}%), Comments: ${result.comments}(${commentPercentage}%), Total: ${result.all}`
+  // );
 
-  myStatusBarItem.text = `$(megaphone) Codes: ${result.codes} Comments: ${result.comments} Total: ${result.all}`;
+  myStatusBarItem.text = `$(file-code) Codes: ${result.codes}(${codePercentage}%), Comments: ${result.comments}(${commentPercentage}%)`;
   myStatusBarItem.show();
 
   // https://github.com/microsoft/vscode-extension-samples/issues/22

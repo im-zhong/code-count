@@ -77,7 +77,7 @@ export abstract class Analyzer {
   private lineCommentHead: string;
   private blockCommentHead: string;
   private blockCommentTail: string;
-  private stringStream: StringStream;
+  protected stringStream: StringStream;
   private offset: number;
   // 我们需要一个数组用来保存每一行的类别
   private lineClasses: BitVector[];
