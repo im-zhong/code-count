@@ -13,6 +13,13 @@ Inspired by linux cli tool wc, instead couting word, this tool will count lines 
 
 ![example](assets/example2.png)
 
+## TODO
+
+* [ ] add support for c/c++
+* [ ] add support for golang
+* [ ] add support for rust
+* [ ] add a command that statistics the whole workspace
+
 ## Requirements
 
 ## Extension Settings
