@@ -7,8 +7,8 @@ import { StringStream } from "./string-stream";
 import { isSpace, lineClassestoResult } from "./common";
 
 export abstract class Analyzer {
-  private lineBegin: number;
-  private lineEnd: number;
+  protected lineBegin: number;
+  protected lineEnd: number;
   private lineCommentHead: string;
   private blockCommentHead: string;
   private blockCommentTail: string;
@@ -171,13 +171,19 @@ export abstract class Analyzer {
   }
 
   // all skip function should set the current offset correctly
+  // before call this function, make sure you already skip the head of the delimiter
   skipUntilFindDelimiter({
+    firstSkipLength,
     delimiter,
     lineClass,
   }: {
+    firstSkipLength: number;
     delimiter: string;
     lineClass: LineClass;
   }) {
+    // skip the head of the delimiter first
+    this.stringStream.addToCurrentOffset(firstSkipLength);
+
     let offset = 0;
     while (
       (offset = this.stringStream
@@ -262,6 +268,27 @@ export abstract class Analyzer {
     this.lineBegin = this.lineEnd - 1;
   }
 
+  isFoundEscapeSequence({ backLength }: { backLength: number }): boolean {
+    // Look back to find and count backslashes
+    let currentIdx = this.stringStream.getCurrentOffset() - backLength;
+    if (currentIdx < 0) {
+      return false;
+    }
+
+    let slashSize = 0;
+    while (
+      currentIdx >= 0 &&
+      this.stringStream.getCurrentLine()[currentIdx] === "\\"
+    ) {
+      ++slashSize;
+      --currentIdx;
+    }
+    // If slashSize is even, then it is not an escape sequence
+    // and we find the end of the string, make offset point to the
+    // next position of delimiter
+    return slashSize % 2 !== 0;
+  }
+
   skipRawString() {
     // raw string: r"..."
     // offset -> r, but r should not count as a part of raw string
@@ -271,10 +298,10 @@ export abstract class Analyzer {
         this.stringStream.getCurrentOffset() + 1,
         this.stringStream.getCurrentOffset() + 2
       );
-
     const rawStringTail = rawStringHead;
 
     this.skipUntilFindDelimiter({
+      firstSkipLength: 1 + rawStringHead.length,
       delimiter: rawStringTail,
       lineClass: LineClass.Code,
     });
@@ -296,10 +323,8 @@ export abstract class Analyzer {
   }
 
   skipBlockComment() {
-    this.stringStream.setCurrentOffset(
-      this.stringStream.getCurrentOffset() + this.blockCommentHead.length
-    );
     this.skipUntilFindDelimiter({
+      firstSkipLength: this.blockCommentHead.length,
       delimiter: this.blockCommentTail,
       lineClass: LineClass.BlockComment,
     });

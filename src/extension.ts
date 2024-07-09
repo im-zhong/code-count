@@ -90,6 +90,8 @@ function updateStatusBarItem(): void {
 
   clearBackground({ editor });
   updateBackground({ editor, result });
+
+  vscode.window.showInformationMessage("Code count updated");
 }
 
 function clearBackground({ editor }: { editor: vscode.TextEditor }) {

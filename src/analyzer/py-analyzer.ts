@@ -49,6 +49,58 @@ export class PyAnalyzer extends Analyzer {
     // raw string: r"..."
     // offset -> r, but r should not couat as a part of raw string
     const delimiter = line.slice(offset + 1, offset + 1 + delimiterLength);
-    this.skipUntilFindDelimiter({ delimiter, lineClass: LineClass.Code });
+    this.skipUntilFindDelimiter({
+      firstSkipLength: 1 + delimiterLength,
+      delimiter,
+      lineClass: LineClass.Code,
+    });
+  }
+
+  skipString() {
+    // maybe is ''' or """
+    if (this.isBlockStringHead()) {
+      this.skipBlockString();
+      return;
+    }
+
+    super.skipString();
+  }
+
+  isBlockStringHead(): boolean {
+    const line = this.stringStream.getCurrentLine();
+    const offset = this.stringStream.getCurrentOffset();
+    return (
+      line.slice(offset, offset + 3) === '"""' ||
+      line.slice(offset, offset + 3) === "'''"
+    );
+  }
+
+  skipBlockString(): void {
+    const delimiter = this.stringStream
+      .getCurrentLine()
+      .slice(
+        this.stringStream.getCurrentOffset(),
+        this.stringStream.getCurrentOffset() + 3
+      );
+
+    // offset -> "...["]""..."
+    this.skipUntilFindDelimiter({
+      firstSkipLength: delimiter.length,
+      delimiter,
+      lineClass: LineClass.Code,
+    });
+    // offset -> "..."""[x]..."
+
+    // at this point, we could not say that we found the true delimiter
+    // cause there maybe escape sequence before the tail delimiter
+    // so we need to check it
+    // if it has, then we should coutinue found the true tail delimiter
+    while (this.isFoundEscapeSequence({ backLength: delimiter.length + 1 })) {
+      this.skipUntilFindDelimiter({
+        firstSkipLength: 0,
+        delimiter,
+        lineClass: LineClass.Code,
+      });
+    }
   }
 }
