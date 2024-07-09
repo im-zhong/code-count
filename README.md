@@ -31,6 +31,10 @@ Initial release of code count tool, support
 * JSX
 * python
 
+### 0.1.2
+
+fix a bug that could stuck the extension when analyzing comment string in python
+
 ---
 
 **Enjoy!**
