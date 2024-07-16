@@ -6,8 +6,11 @@ import * as vscode from "vscode";
 import { makeAnalyzer } from "./analyzer/factory";
 import { LineClass } from "./analyzer/types";
 import { Result } from "./analyzer/types";
+import { countWorkspace } from "./command/count-workspace";
 
 let statusBarItem: vscode.StatusBarItem;
+
+// add a command to iterate the current file folder
 
 // https://github.com/microsoft/vscode-extension-samples/issues/22
 // decorationType should be created only once
@@ -34,6 +37,11 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
       backgroundToggle = !backgroundToggle;
       updateStatusBarItem();
     })
+  );
+
+  // register a command that could count the whole workspace
+  subscriptions.push(
+    vscode.commands.registerCommand("code-count.countWorkspace", countWorkspace)
   );
 
   // create a new status bar item that we can now manage
