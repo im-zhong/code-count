@@ -5,6 +5,7 @@
 import { Analyzer } from "./base-analyzer";
 import { PyAnalyzer } from "./py-analyzer";
 import { TsAnalyzer } from "./ts-analyzer";
+import { CppAnalyzer } from "./cpp-analyzer";
 
 // make the analyzer
 export function makeAnalyzer({
@@ -24,6 +25,8 @@ export function makeAnalyzer({
   ) {
     return new TsAnalyzer({ text });
   }
-
+  if (["cpp", "c", "objective-c", "objective-cpp"].includes(languageId)) {
+    return new CppAnalyzer({ text });
+  }
   return null;
 }
