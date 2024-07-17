@@ -11,6 +11,10 @@ import ignore, { Ignore } from "ignore";
 import path from "path";
 import * as fs from "fs/promises";
 import { makeAnalyzer } from "../analyzer/factory";
+import { SUPPORT_LANGUAGES } from "../conf/support-languages";
+import { GitIgnoreFilter } from "./git-ignore-filter";
+import { showResult, showWorkspaceResults } from "./result-shower";
+import { WorkspaceResult } from "../analyzer/types";
 
 // const ig = ignore().add(["**/node_modules/**", "**/.git/**"]);
 
@@ -41,7 +45,7 @@ export async function countWorkspace() {
 
   const workspaceFolders = vscode.workspace.workspaceFolders;
   if (workspaceFolders === undefined) {
-    vscode.window.showInformationMessage("No workspace is opened.");
+    // vscode.window.showInformationMessage("No workspace is opened.");
     return;
   }
 
@@ -50,83 +54,23 @@ export async function countWorkspace() {
   }
 }
 
-class GitIgnoreFilter {
-  private ig: Ignore | null = null;
-  constructor({ patterns }: { patterns: string }) {
-    this.ig = patterns !== "" ? ignore().add(patterns) : null;
-  }
-
-  ignores(path: string): boolean {
-    if (this.ig === null) {
-      return true;
-    }
-    return this.ig.ignores(path);
-  }
-
-  async getFilteredPaths({ folder }: { folder: string }): Promise<string[]> {
-    const pathes = await fs.readdir(folder, { withFileTypes: true });
-    // 实际上这是不对的 我们还要recursive
-    // 但是我们要特殊情况特殊分析
-    // 应该用最简单的方式来实现
-    // 我们分析代码不也是通过文件后缀来判断的吗？
-    // 那glob不就是可以直接拿到对应的文件吗？
-    // 然后我们再根据gitignore来过滤
-    // 这才是最简单的方式啊！！！
-    return pathes
-      .filter((path) => !this.ignores(path.name))
-      .map((path) => path.name);
-  }
-
-  // 根据我们支持的语言的后缀，通过glob来查找文件
-  // TODO: 你可以看到这里的代码是重复的
-  // 我们应该把代表各种语言的后缀给提取出来，甚至可以做成一个配置？
-  async getAllCppFiles({ folder }: { folder: string }): Promise<string[]> {
-    const suffixes = [
-      // C
-      ".c",
-      ".h",
-      // C++
-      ".cc",
-      ".hh",
-      ".cpp",
-      ".hpp",
-      ".cxx",
-      ".hxx",
-      ".c++",
-      ".h++",
-      // Objective-C
-      ".m",
-      // Objective-C++
-      ".mm",
-    ];
-    const patterns = suffixes.map((suffix) =>
-      path.join(folder, "**", `*${suffix}`)
-    );
-
-    return (await glob(patterns)).filter((file) => !this.ignores(file));
-  }
-
-  async getAllTsFiles({ folder }: { folder: string }): Promise<string[]> {
-    const suffixes = [".ts", ".tsx", "js", "jsx", "mjs", "mts"];
-    const patterns = suffixes.map((suffix) =>
-      path.join(folder, "**", `*${suffix}`)
-    );
-    return (await glob(patterns)).filter((file) => !this.ignores(file));
-  }
-
-  async getAllPyFiles({ folder }: { folder: string }): Promise<string[]> {
-    const suffixes = [".py"];
-    const patterns = suffixes.map((suffix) =>
-      path.join(folder, "**", `*${suffix}`)
-    );
-    return (await glob(patterns)).filter((file) => !this.ignores(file));
-  }
-}
-
-async function countFolder({ folder }: { folder: vscode.WorkspaceFolder }) {
+async function countFolderWithLanguage({
+  folder,
+  languageId,
+}: {
+  folder: vscode.WorkspaceFolder;
+  languageId: string;
+}) {
   // 不对 每个workspace都有自己的gitginore！
   const paths = [];
   let gitIgnoreContent = "";
+  const results = [];
+
+  // refactor: 这整个处理的逻辑也是一样的
+  // 唯一不同的就是languageId不一样
+  // 每个文件都需要根据其后缀创建一个analyzer
+  // 虽然用glob会有性能问题，不过我们先写出来再说
+  // 就先按照目前的方案实现
   try {
     // 这里要join吧
     const gitignorePath = path.join(folder.uri.fsPath, ".gitignore");
@@ -142,10 +86,17 @@ async function countFolder({ folder }: { folder: vscode.WorkspaceFolder }) {
     // 那只能自己包装一个filter了
     const filter = new GitIgnoreFilter({ patterns: gitIgnoreContent });
 
+    // 首先找到所有支持的languageId
+    //
+
+    let codes = 0;
+    let comments = 0;
+
     // calculate all the languages that we support
     // 1. C/C++/Objective-C/Objective-C++
-    for (const file of await filter.getAllCppFiles({
+    for (const file of await filter.getAllFiles({
       folder: folder.uri.fsPath,
+      languageId: languageId,
     })) {
       // first read the file
       const content = await fs.readFile(file, { encoding: "utf8" });
@@ -159,11 +110,31 @@ async function countFolder({ folder }: { folder: vscode.WorkspaceFolder }) {
       if (result === null) {
         continue;
       }
+      results.push(result);
       // how to report the result?
       // generate a new page to report ?
       // https://code.visualstudio.com/api/extension-guides/webview
       // 看起来只有这个可以做，我们需要自己写一个html页面，来展示我们的数据了
+      // TODO: 其实倒也不用，咱们先用vscode的提示功能展示代码行数吧
+      // vscode.window.showInformationMessage(
+      //   `File: ${file}\nCodes: ${result.codes}\nComments: ${result.comments}`
+      // );
+      codes += result.codes;
+      comments += result.comments;
     }
+
+    // refactor: 这个展示的部分是一样的
+    // 所有的输入都是一个list of result，不对，每个result里面都应该包含一个文件名
+    // at the final, show the
+    // 我们应该展示所有的代码文件，以相对于项目根目录的方式展示
+    // 按照代码量codes 进行排序，还是按照glob的顺序进行排序？
+    // C/C++:
+    // Files: 12, Codes: 1234, Comments: 1234
+    // ---------------------------------------
+    // File: xxx/xxx.cpp, Codes: 100(12%), Comments: 1234(3%)
+    // vscode.window.showInformationMessage(
+    //   `Codes: ${codes}, Comments: ${comments}`
+    // );
 
     // iterate all files in the folder
     // 好像不行 glob太慢了
@@ -183,10 +154,10 @@ async function countFolder({ folder }: { folder: vscode.WorkspaceFolder }) {
     // 返回一个list，其中的每个文件都是我们需要分析的文件
 
     // write paths to a file for debugging
-    const pathsFile = path.join(folder.uri.fsPath, "paths.txt");
-    await fs.writeFile(pathsFile, pathsFile, {
-      encoding: "utf8",
-    });
+    // const pathsFile = path.join(folder.uri.fsPath, "paths.txt");
+    // await fs.writeFile(pathsFile, paths, {
+    //   encoding: "utf8",
+    // });
   } catch (error) {
     console.error(error);
   }
@@ -194,8 +165,37 @@ async function countFolder({ folder }: { folder: vscode.WorkspaceFolder }) {
   //   // Adds a / character to directory matches.
   //   mark: true,
   // });
+  return results;
 
   // 咱们吧内容写到文件里面吧 方便调试
+}
+
+async function countFolder({ folder }: { folder: vscode.WorkspaceFolder }) {
+  // 遍历所有的支持的语言
+  let message = "";
+  const workspaceResults: WorkspaceResult[] = [];
+  for (const languageId of SUPPORT_LANGUAGES) {
+    const results = await countFolderWithLanguage({ folder, languageId });
+
+    workspaceResults.push({
+      workspace: "",
+      language: languageId,
+      results: results,
+    } satisfies WorkspaceResult);
+    // 然后展示结果
+    // 我们可以提供一个dict
+    // key是语言，value就是results
+    // message += showResult({ languageId, results });
+  }
+
+  // 这里需要拿到结果进行统一的汇报
+  // 所以上面的函数应该就是
+  // show message here
+  // https://github.com/microsoft/vscode/issues/101589
+  // vscode can not show structured message, how to
+  // the only way to do it better is generate a new html page and render it
+  // so we need a new function
+  showWorkspaceResults({ workspaceResults });
 }
 
 async function isExists({ path }: { path: string }): Promise<boolean> {

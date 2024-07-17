@@ -11,8 +11,15 @@ export enum LineClass {
 }
 
 export interface Result {
+  file: string | undefined;
   all: number;
   codes: number;
   comments: number;
   lineClasses: LineClass[];
+}
+
+export interface WorkspaceResult {
+  workspace: string;
+  language: string;
+  results: Result[];
 }
