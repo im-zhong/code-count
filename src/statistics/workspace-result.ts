@@ -1,9 +1,13 @@
 // 2024/7/22
 // zhangzhong
 
-import { Result } from "./analyzer/types";
+import { DetailedResult } from "../analyzer/types";
+import { SUPPORT_LANGUAGES } from "../conf/support-languages";
 
-export class WorkspaceResult {
+// 即然如此 这个类型定义是统一的
+// 那么我们可以提取出来 放在types里面
+
+export class WorkspaceStatistics {
   workspaces: {
     [key: string]: { [key: string]: Result };
   };
@@ -39,7 +43,7 @@ export class WorkspaceResult {
     workspaceName: string;
     relativeFilePath: string;
     // languageId: string;
-    analyzeResult: Result;
+    analyzeResult: DetailedResult;
   }) {
     // we do not use languageId, we use our own language
     // but the input function could use languageID
@@ -55,8 +59,14 @@ export class WorkspaceResult {
     workspace[relativeFilePath] = analyzeResult;
   }
 
-  // statistic of the whole workspace of a cetrain language
-  statistic({ workspace, language }: { workspace: string; language: string }): {
+  // get the statistic of a certain file
+  getStatistics({
+    workspace,
+    language,
+  }: {
+    workspace: string;
+    language: string;
+  }): {
     totalCodes: number;
     totalComments: number;
   } {
@@ -74,5 +84,11 @@ export class WorkspaceResult {
     }
 
     return { totalCodes, totalComments };
+  }
+
+  // statistic of the whole workspace of a cetrain language
+  async statistic({ workspace }: { workspace: string }) {
+    // 遍历我们支持的语言
+    this.statistics[workspace] = await countFolder(workspace);
   }
 }

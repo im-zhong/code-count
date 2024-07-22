@@ -1,7 +1,7 @@
 // 2024/7/8
 // zhangzhong
 
-import { Result, LineClass } from "./types";
+import { DetailedResult, LineClass } from "./types";
 import { BitVector } from "./bit-vector";
 import { StringStream } from "./string-stream";
 import { isSpace, lineClassestoResult } from "./common";
@@ -35,7 +35,7 @@ export abstract class Analyzer {
     this.stringStream = new StringStream(text);
   }
 
-  analyze(): Result | null {
+  analyze(): DetailedResult | null {
     try {
       this.init();
 

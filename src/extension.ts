@@ -5,13 +5,14 @@
 import * as vscode from "vscode";
 import { makeAnalyzer } from "./analyzer/factory";
 import { LineClass } from "./analyzer/types";
-import { Result } from "./analyzer/types";
-import { countWorkspace } from "./command/count-workspace";
+import { DetailedResult } from "./analyzer/types";
+import { countWorkspace } from "./statistics/count-workspace";
 import { toSupportLanguage } from "./conf/support-languages";
-import { WorkspaceResult } from "./workspace-result";
+import { WorkspaceStatistics } from "./statistics/workspace-result";
+// import { Worker } from "worker_threads";
 
 let statusBarItem: vscode.StatusBarItem;
-let workspaceResult: WorkspaceResult = new WorkspaceResult();
+let workspaceStatistics = new WorkspaceStatistics();
 
 // add a command to iterate the current file folder
 
@@ -30,8 +31,32 @@ const codeCommentDecorationType = vscode.window.createTextEditorDecorationType({
 // default do not toggle the background color
 let backgroundToggle = false;
 
+// Function to spawn a worker and communicate with it
+// function useWorker() {
+//   const worker = new Worker("./path/to/workerScript.js", { eval: false });
+
+//   worker.on("message", (message) => {
+//     console.log(message); // Log messages from the worker
+//   });
+
+//   worker.postMessage("Start task"); // Send a task to the worker
+
+//   worker.on("error", (error) => {
+//     console.error("Worker error:", error);
+//   });
+
+//   worker.on("exit", (code) => {
+//     if (code !== 0) {
+//       console.error(`Worker stopped with exit code ${code}`);
+//     }
+//   });
+// }
+
 // the activate function in a Visual Studio Code extension is called only once throughout the entire lifecycle of the extension. It is invoked by VS Code when the extension is first activated. Activation can occur due to a variety of reasons specified in the extension's package.json file, such as the user opening a file of a certain type, running a command defined by the extension, or other activation events. The purpose of the activate function is to set up any necessary resources, commands, listeners, or other initialization tasks needed for the extension to work.
-export function activate({ subscriptions }: vscode.ExtensionContext) {
+export async function activate({ subscriptions }: vscode.ExtensionContext) {
+  // at the very beginning, start a worker thread
+  // useWorker();
+
   // register a command that is invoked when the status bar
   // item is selected
   const commandId = "code-count.showCodeCount";
@@ -64,6 +89,9 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
   subscriptions.push(
     vscode.workspace.onDidSaveTextDocument(updateStatusBarItem)
   );
+
+  // initialized the workspace statistics
+  workspaceStatistics = await countWorkspace();
 
   // update status bar item once at the beginning
   updateStatusBarItem();
@@ -103,12 +131,12 @@ function updateStatusBarItem(): void {
   });
   result.all = editor.document.lineCount;
 
-  workspaceResult.updateFile({
+  workspaceStatistics.updateFile({
     workspaceName: vscode.workspace.name || "unknown",
     relativeFilePath: relativePath,
     analyzeResult: result,
   });
-  const { totalCodes, totalComments } = workspaceResult.statistic({
+  const { totalCodes, totalComments } = workspaceStatistics.getStatistics({
     workspace: vscode.workspace.name || "unknown",
     language: result.language,
   });
@@ -136,7 +164,7 @@ function updateBackground({
   result,
 }: {
   editor: vscode.TextEditor;
-  result: Result;
+  result: DetailedResult;
 }) {
   if (!backgroundToggle) {
     return;

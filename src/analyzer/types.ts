@@ -10,17 +10,35 @@ export enum LineClass {
   Comment,
 }
 
+// workspace statistics only need the simple result
+
 export interface Result {
-  file: string | undefined;
-  language: string;
   all: number;
   codes: number;
   comments: number;
+}
+
+export interface DetailedResult extends Result {
+  file: string | undefined;
+  language: string;
+  // all: number;
+  // codes: number;
+  // comments: number;
   lineClasses: LineClass[];
 }
 
-export interface WorkspaceResult {
-  workspace: string;
-  language: string;
-  results: Result[];
-}
+// export interface WorkspaceResult {
+//   workspace: string;
+//   language: string;
+//   results: DetailedResult[];
+// }
+
+// analyzer return detailed result
+// export interface DetailedResult {
+//   relativePath: string;
+//   language: string;
+//   lines: number;
+//   codes: number;
+//   comments: number;
+//   lineClasses: LineClass[];
+// }

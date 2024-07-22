@@ -1,7 +1,7 @@
 // 2024/7/8
 // zhangzhong
 
-import { Result, LineClass } from "./types";
+import { DetailedResult, LineClass } from "./types";
 import { BitVector } from "./bit-vector";
 
 export function isSpace(char: string): boolean {
@@ -12,8 +12,8 @@ export function lineClassestoResult({
   lineClasses,
 }: {
   lineClasses: BitVector[];
-}): Result {
-  const result: Result = {
+}): DetailedResult {
+  const result: DetailedResult = {
     all: lineClasses.length,
     codes: 0,
     comments: 0,

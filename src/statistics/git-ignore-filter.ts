@@ -1,6 +1,8 @@
 // 2024/7/17
 // zhangzhong
 
+import * as vscode from "vscode";
+
 import { glob } from "glob";
 import ignore, { Ignore } from "ignore";
 import path from "path";
@@ -90,5 +92,35 @@ export class GitIgnoreFilter {
       return this.getAllCppFiles({ folder });
     }
     return [];
+  }
+}
+
+export async function newGitIgnoreFilter({
+  folder,
+}: {
+  folder: vscode.WorkspaceFolder;
+}) {
+  let gitIgnoreContent = "";
+  const gitignorePath = path.join(folder.uri.fsPath, ".gitignore");
+  // check if the file exists
+  if (await isExists({ path: gitignorePath })) {
+    // count the folder with out pattern
+    gitIgnoreContent = await fs.readFile(gitignorePath, {
+      encoding: "utf8",
+    });
+  }
+
+  // 空的竟然是不能用的？
+  // 那只能自己包装一个filter了
+  const filter = new GitIgnoreFilter({ patterns: gitIgnoreContent });
+  return filter;
+}
+
+async function isExists({ path }: { path: string }): Promise<boolean> {
+  try {
+    await fs.access(path, fs.constants.F_OK | fs.constants.R_OK);
+    return true;
+  } catch (error) {
+    return false;
   }
 }
