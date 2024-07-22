@@ -23,6 +23,7 @@ Inspired by linux cli tool wc, instead couting word, this tool will count lines 
 * [ ] BUG: broken string will stuck the extension
 * [ ] add logs to each function's entrance and exit, so I could find the extension is stuck in which point
 * [ ] we could draw the code protion of different language like github webpage
+* [ ] fix a bug that string is span multi line, could stuck the extension
 
 ## Requirements
 

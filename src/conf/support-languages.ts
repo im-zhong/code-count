@@ -39,3 +39,26 @@ export const CPP_SUFFIXES = [
 export const TS_SUFFIXES = [".ts", ".tsx", "js", "jsx", "mjs", "mts"];
 
 export const PY_SUFFIXES = [".py"];
+
+// from languageId to support language
+export function toSupportLanguage({
+  languageId,
+}: {
+  languageId: string;
+}): string {
+  if (languageId === "c" || languageId === "cpp") {
+    return "cpp";
+  }
+  if (languageId === "python") {
+    return "python";
+  }
+  if (
+    languageId === "typescript" ||
+    languageId === "javascript" ||
+    languageId === "typescriptreact" ||
+    languageId === "javascriptreact"
+  ) {
+    return "typescript";
+  }
+  throw new Error(`Unsupported languageId: ${languageId}`);
+}

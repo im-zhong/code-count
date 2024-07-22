@@ -12,6 +12,7 @@ export enum LineClass {
 
 export interface Result {
   file: string | undefined;
+  language: string;
   all: number;
   codes: number;
   comments: number;

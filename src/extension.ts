@@ -7,8 +7,11 @@ import { makeAnalyzer } from "./analyzer/factory";
 import { LineClass } from "./analyzer/types";
 import { Result } from "./analyzer/types";
 import { countWorkspace } from "./command/count-workspace";
+import { toSupportLanguage } from "./conf/support-languages";
+import { WorkspaceResult } from "./workspace-result";
 
 let statusBarItem: vscode.StatusBarItem;
+let workspaceResult: WorkspaceResult = new WorkspaceResult();
 
 // add a command to iterate the current file folder
 
@@ -73,6 +76,14 @@ function updateStatusBarItem(): void {
     return;
   }
 
+  // get current active editor's relative path
+  // if the file is not saved, the uri will be undefined
+
+  // Get the absolute path of the file in the current editor
+  const filePath = editor.document.uri.fsPath;
+  // Convert the absolute path to a relative path
+  const relativePath = vscode.workspace.asRelativePath(filePath, false);
+
   const analyzer = makeAnalyzer({
     text: editor.document.getText(),
     languageId: editor.document.languageId,
@@ -87,13 +98,27 @@ function updateStatusBarItem(): void {
     statusBarItem.hide();
     return;
   }
-
+  result.language = toSupportLanguage({
+    languageId: editor.document.languageId,
+  });
   result.all = editor.document.lineCount;
-  const codePercentage =
-    result.all > 0 ? Math.round((result.codes / result.all) * 100) : 0;
-  const commentPercentage =
-    result.all > 0 ? Math.round((result.comments / result.all) * 100) : 0;
-  statusBarItem.text = `$(file-code) Codes: ${result.codes}(${codePercentage}%), Comments: ${result.comments}(${commentPercentage}%)`;
+
+  workspaceResult.updateFile({
+    workspaceName: vscode.workspace.name || "unknown",
+    relativeFilePath: relativePath,
+    analyzeResult: result,
+  });
+  const { totalCodes, totalComments } = workspaceResult.statistic({
+    workspace: vscode.workspace.name || "unknown",
+    language: result.language,
+  });
+
+  // const codePercentage =
+  //   result.all > 0 ? Math.round((result.codes / result.all) * 100) : 0;
+  // const commentPercentage =
+  //   result.all > 0 ? Math.round((result.comments / result.all) * 100) : 0;
+  // statusBarItem.text = `$(file-code) Codes: ${result.codes}(${codePercentage}%), Comments: ${result.comments}(${commentPercentage}%)`;
+  statusBarItem.text = `Codes: ${result.codes}/${totalCodes}, Comments: ${result.comments}/${totalComments}`;
   statusBarItem.show();
 
   clearBackground({ editor });
