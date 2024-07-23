@@ -5,7 +5,7 @@
 import * as vscode from "vscode";
 import { makeAnalyzer } from "./analyzer/factory";
 import { LineClass } from "./analyzer/types";
-import { DetailedResult } from "./analyzer/types";
+import { FileResult } from "./analyzer/types";
 import { toSupportedLanguage } from "./conf/support-languages";
 import { WorkspaceCounter } from "./statistics/workspace-result";
 // import { Worker } from "worker_threads";
@@ -127,10 +127,10 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
   // workspaceStatistics = await countWorkspace();
 
   // update status bar item once at the beginning
-  updateStatusBarItem();
+  await updateStatusBarItem();
 }
 
-function updateStatusBarItem(): void {
+async function updateStatusBarItem(): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
     statusBarItem.hide();
@@ -182,7 +182,7 @@ function updateStatusBarItem(): void {
   // Return Value: It returns a WorkspaceFolder object that contains information about the workspace folder, such as its uri, name, and index. If the file is not contained in any workspace folder, it returns undefined.
 
   const { result, totalCodes, totalComments } =
-    workspaceStatistics.getStatistics({
+    await workspaceStatistics.getStatistics({
       workspaceFolder: vscode.workspace.getWorkspaceFolder(editor.document.uri),
       languageId: editor.document.languageId,
       text: editor.document.getText(),
@@ -217,7 +217,7 @@ function updateBackground({
   result,
 }: {
   editor: vscode.TextEditor;
-  result: DetailedResult;
+  result: FileResult;
 }) {
   if (!backgroundToggle) {
     return;

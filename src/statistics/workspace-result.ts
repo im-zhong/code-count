@@ -1,13 +1,16 @@
 // 2024/7/22
 // zhangzhong
 
-import { Result } from "../analyzer/types";
-import { SUPPORTED_LANGUAGES } from "../conf/support-languages";
+import { FileResult } from "../analyzer/types";
+import {
+  SUPPORTED_LANGUAGES,
+  toSupportedLanguage,
+} from "../conf/support-languages";
 import { FolderCounter } from "./count-workspace";
 import * as vscode from "vscode";
 import { getGitIgnoreFilter } from "./git-ignore-filter";
 import { FolderResult, WorkspaceStatistics } from "./types";
-import { DetailedResult } from "../analyzer/types";
+
 import { makeAnalyzer } from "../analyzer/factory";
 // 即然如此 这个类型定义是统一的
 // 那么我们可以提取出来 放在types里面
@@ -30,7 +33,25 @@ export class WorkspaceCounter {
   }
 
   addWorkspace(workspace: string) {
-    this.statistics[workspace] = {};
+    // perhaps this workspace alread in there
+    // and we alread add some languages in it
+    // so we should not cover it
+    if (!(workspace in this.statistics)) {
+      this.statistics[workspace] = {};
+    }
+  }
+
+  addLanguage({
+    workspaceName,
+    language,
+  }: {
+    workspaceName: string;
+    language: string;
+  }) {
+    this.addWorkspace(workspaceName);
+    if (!(language in this.statistics[workspaceName])) {
+      this.statistics[workspaceName][language] = {};
+    }
   }
 
   deleteFile({
@@ -57,7 +78,7 @@ export class WorkspaceCounter {
     workspaceName: string;
     relativeFilePath: string;
     // languageId: string;
-    analyzeResult: Result;
+    analyzeResult: FileResult;
     language: string;
   }) {
     // we do not use languageId, we use our own language
@@ -75,7 +96,7 @@ export class WorkspaceCounter {
   }
 
   // get the statistic of a certain file
-  getStatistics({
+  async getStatistics({
     workspaceFolder,
     text,
     languageId,
@@ -85,11 +106,11 @@ export class WorkspaceCounter {
     languageId: string;
     text: string;
     relativePath: string;
-  }): {
-    result?: DetailedResult;
-    totalCodes: number;
-    totalComments: number;
-  } {
+  }): Promise<{
+    result?: FileResult;
+    totalCodes?: number;
+    totalComments?: number;
+  }> {
     let totalCodes = 0;
     let totalComments = 0;
     let result = undefined;
@@ -103,20 +124,59 @@ export class WorkspaceCounter {
     //   }
     // }
 
-    const analyzer = makeAnalyzer({
-      text: text,
-      languageId: languageId,
-    });
-    if (!analyzer) {
-      return { totalCodes, totalComments };
+    // if no workspace, we do not need to analyze
+    if (!workspaceFolder) {
+      return {};
     }
 
-    result = analyzer.analyze();
-    if (!result) {
-      return { totalCodes, totalComments };
+    // check if we need to initialize the workspace
+    const language = toSupportedLanguage({ languageId });
+    if (!language) {
+      return {};
     }
 
-    return { result, totalCodes, totalComments };
+    // 不对，首先是，如果我们的workspace没有被初始化
+    // 如果该语言没有被初始化
+    // 如果该文件没有被初始化
+    // 那么我们就需要初始化
+    if (
+      !(workspaceFolder.name in this.statistics) ||
+      !(language in this.statistics[workspaceFolder.name]) ||
+      !(relativePath in this.statistics[workspaceFolder.name][language])
+    ) {
+      console.log("need to inizialize workspace");
+      vscode.window.showInformationMessage("need to initialize workspace");
+
+      await this.statistic({ workspace: workspaceFolder, language });
+    }
+
+    // sum the total codes and comments
+    for (const [file, result] of Object.entries(
+      this.statistics[workspaceFolder.name][language]
+    )) {
+      totalCodes += result.codes;
+      totalComments += result.comments;
+    }
+    return {
+      result: this.statistics[workspaceFolder.name][language][relativePath],
+      totalCodes,
+      totalComments,
+    };
+
+    // const analyzer = makeAnalyzer({
+    //   text: text,
+    //   languageId: languageId,
+    // });
+    // if (!analyzer) {
+    //   return { totalCodes, totalComments };
+    // }
+
+    // result = analyzer.analyze();
+    // if (!result) {
+    //   return { totalCodes, totalComments };
+    // }
+
+    // return { result, totalCodes, totalComments };
   }
 
   // statistic of the whole workspace of a cetrain language
@@ -126,7 +186,7 @@ export class WorkspaceCounter {
   }: {
     workspace: vscode.WorkspaceFolder;
     language: string;
-  }) {
+  }): Promise<void> {
     // 遍历我们支持的语言
 
     // 为了尽可能加快加载速度
@@ -141,7 +201,8 @@ export class WorkspaceCounter {
       filter: await getGitIgnoreFilter({ workspace }),
     });
 
-    this.statistics[workspace.name][language] =
-      await folderCounter.countFolder();
+    const results = await folderCounter.countFolder();
+    this.addLanguage({ workspaceName: workspace.name, language });
+    this.statistics[workspace.name][language] = results;
   }
 }

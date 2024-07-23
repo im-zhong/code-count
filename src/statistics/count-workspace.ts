@@ -13,10 +13,9 @@ import * as fs from "fs/promises";
 import { makeAnalyzer } from "../analyzer/factory";
 import { SUPPORTED_LANGUAGES } from "../conf/support-languages";
 import { WorkspaceCounter } from "./workspace-result";
-import { DetailedResult } from "../analyzer/types";
+import { FileResult } from "../analyzer/types";
 import { Statistics } from "./types";
 import { GitIgnoreFilter } from "./git-ignore-filter";
-import { Result } from "../analyzer/types";
 import { FolderResult } from "./types";
 // const ig = ignore().add(["**/node_modules/**", "**/.git/**"]);
 
@@ -40,7 +39,7 @@ export class FolderCounter {
   private folder: vscode.WorkspaceFolder;
   private language: string;
   private filter: GitIgnoreFilter;
-  private results: { [key: string]: Result };
+  private results: { [key: string]: FileResult };
 
   constructor({
     folder,
@@ -79,7 +78,9 @@ export class FolderCounter {
         continue;
       }
       // result.file = file;
-      this.results[file] = result as Result;
+      // to relative path
+      const relativePath = path.relative(this.folder.uri.fsPath, file);
+      this.results[relativePath] = result;
     }
     return this.results;
   }

@@ -1,14 +1,14 @@
 // 2024/7/22
 // zhangzhong
 
-import { Result } from "../analyzer/types";
+import { FileResult } from "../analyzer/types";
 
 export interface Statistics {
-  [key: string]: Result;
+  [key: string]: FileResult;
 }
 
 export interface FolderResult {
-  [relativePath: string]: Result;
+  [relativePath: string]: FileResult;
 }
 
 export interface WorkspaceStatistics {

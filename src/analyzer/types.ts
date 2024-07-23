@@ -12,18 +12,18 @@ export enum LineClass {
 
 // workspace statistics only need the simple result
 
-export interface Result {
+// export interface Result {
+//   all: number;
+//   codes: number;
+//   comments: number;
+// }
+
+export interface FileResult {
+  // file: string | undefined;
+  // language: string;
   all: number;
   codes: number;
   comments: number;
-}
-
-export interface DetailedResult extends Result {
-  file: string | undefined;
-  language: string;
-  // all: number;
-  // codes: number;
-  // comments: number;
   lineClasses: LineClass[];
 }
 
