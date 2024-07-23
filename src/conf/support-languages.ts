@@ -63,3 +63,13 @@ export function toSupportedLanguage({
   }
   throw new Error(`Unsupported languageId: ${languageId}`);
 }
+
+export function getSupportedLanguageFromPath({
+  path,
+}: {
+  path: string;
+}): string | undefined {
+  return SUPPORTED_LANGUAGES.find((language) =>
+    path.endsWith(CPP_SUFFIXES.map((suffix) => suffix).join("|"))
+  );
+}

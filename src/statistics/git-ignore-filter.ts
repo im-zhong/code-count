@@ -157,10 +157,45 @@ async function isExists({ path }: { path: string }): Promise<boolean> {
 // 当gitignore文件发生变化时
 // 我们的统计数量也要发生变化
 
+// 当且仅当保存gitignore文件的时候，我们需要重新生成filter
+// 同时需要重新计算整个项目？
+// 有一个最简单的方法，就是把filter和statistics给删了
+// 这样下次我们点开某个文件的时候，就会自动触发重新计算的流程！
+// 完美！！！
+
 export function getGitIgnoreFilter({
   workspace,
 }: {
   workspace: vscode.WorkspaceFolder;
 }) {
+  // TODO
+  // 实际上这里可以使用单例
+  // 并且对于每个workspace 我们维护一个filter
+  // 当.gitignore文件发生变化时
+  // 我们的filter也要发生变化
   return newGitIgnoreFilter({ folder: workspace });
 }
+
+// 我们需要一个filter的manager
+// 这个manager会帮助我们维护一个filter
+class FilterManager {
+  private filters: { [key: string]: GitIgnoreFilter } = {};
+  async getFilter({
+    workspace,
+  }: {
+    workspace: vscode.WorkspaceFolder;
+  }): Promise<GitIgnoreFilter> {
+    if (!(workspace.name in this.filters)) {
+      this.filters[workspace.name] = await getGitIgnoreFilter({ workspace });
+    }
+    return this.filters[workspace.name];
+  }
+
+  async deleteFilter({ workspaceName }: { workspaceName: string }) {
+    if (workspaceName in this.filters) {
+      delete this.filters[workspaceName];
+    }
+  }
+}
+
+export const filterManager = new FilterManager();
