@@ -18,6 +18,7 @@ export const CPP_SUFFIXES = [
   // C
   ".c",
   ".h",
+  ".h.in",
   // C++
   ".cc",
   ".hh",

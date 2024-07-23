@@ -45,11 +45,38 @@ export class GitIgnoreFilter {
   // TODO: 你可以看到这里的代码是重复的
   // 我们应该把代表各种语言的后缀给提取出来，甚至可以做成一个配置？
   async getAllCppFiles({ folder }: { folder: string }): Promise<string[]> {
-    const patterns = CPP_SUFFIXES.map((suffix) =>
-      path.join(folder, "**", `*${suffix}`)
-    );
+    let startTime = new Date().getTime();
 
-    return (await glob(patterns)).filter((file) => !this.ignores(file));
+    const patterns = CPP_SUFFIXES.map(
+      (suffix) => path.join(folder, "**", `*${suffix}`)
+      //path.join("**", `*${suffix}`)
+    );
+    // 其实我有点想知道
+    // 直接glob会拿到什么
+    // 这样反而会慢一些。。。
+    //
+    // const files = await glob(patterns, { cwd: folder });
+    // 我觉得我需要比较一下这几种方法的性能
+    const files = await glob(patterns);
+    const filtered_files = files.filter(
+      (file) => !this.ignores(path.relative(folder, file))
+    );
+    let endTime = new Date().getTime();
+    console.log(`folder prefix cost time: ${endTime - startTime}ms`);
+
+    // now we use another method
+    // 这种方法太慢了
+    // startTime = new Date().getTime();
+    // const patterns2 = CPP_SUFFIXES.map((suffix) =>
+    //   path.join("**", `*${suffix}`)
+    // );
+    // const files2 = await glob(patterns2);
+    // const filtered_files2 = files2.filter((file) => !this.ignores(file));
+    // endTime = new Date().getTime();
+    // console.log(`cwd cost time: ${endTime - startTime}ms`);
+
+    // return (await glob(patterns)).filter((file) => !this.ignores(file));
+    return filtered_files;
   }
 
   async getAllTsFiles({ folder }: { folder: string }): Promise<string[]> {
