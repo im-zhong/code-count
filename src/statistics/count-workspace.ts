@@ -11,13 +11,13 @@ import ignore, { Ignore } from "ignore";
 import path from "path";
 import * as fs from "fs/promises";
 import { makeAnalyzer } from "../analyzer/factory";
-import { SUPPORT_LANGUAGES } from "../conf/support-languages";
-import { WorkspaceStatistics } from "./workspace-result";
+import { SUPPORTED_LANGUAGES } from "../conf/support-languages";
+import { WorkspaceCounter } from "./workspace-result";
 import { DetailedResult } from "../analyzer/types";
 import { Statistics } from "./types";
 import { GitIgnoreFilter } from "./git-ignore-filter";
 import { Result } from "../analyzer/types";
-
+import { FolderResult } from "./types";
 // const ig = ignore().add(["**/node_modules/**", "**/.git/**"]);
 
 // const paths = [
@@ -58,7 +58,7 @@ export class FolderCounter {
     this.results = {};
   }
 
-  async countWorkspace() {
+  async countFolder(): Promise<FolderResult> {
     for (const file of await this.filter.getAllFiles({
       folder: this.folder.uri.fsPath,
       languageId: this.language,

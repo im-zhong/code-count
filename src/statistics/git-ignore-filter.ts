@@ -8,7 +8,7 @@ import ignore, { Ignore } from "ignore";
 import path from "path";
 import * as fs from "fs/promises";
 import {
-  SUPPORT_LANGUAGES,
+  SUPPORTED_LANGUAGES,
   CPP_SUFFIXES,
   TS_SUFFIXES,
   PY_SUFFIXES,
@@ -123,4 +123,17 @@ async function isExists({ path }: { path: string }): Promise<boolean> {
   } catch (error) {
     return false;
   }
+}
+
+// 我们需要实现一个单例
+// 这个单例需要持续维护一个filter
+// 当gitignore文件发生变化时
+// 我们的统计数量也要发生变化
+
+export function getGitIgnoreFilter({
+  workspace,
+}: {
+  workspace: vscode.WorkspaceFolder;
+}) {
+  return newGitIgnoreFilter({ folder: workspace });
 }

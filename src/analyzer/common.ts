@@ -14,6 +14,8 @@ export function lineClassestoResult({
   lineClasses: BitVector[];
 }): DetailedResult {
   const result: DetailedResult = {
+    file: "todo",
+    language: "todo",
     all: lineClasses.length,
     codes: 0,
     comments: 0,

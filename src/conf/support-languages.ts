@@ -3,7 +3,7 @@
 
 // C and C++ should be one language
 // and we set the suffix of c and c++
-export const SUPPORT_LANGUAGES = [
+export const SUPPORTED_LANGUAGES = [
   // "c",
   "cpp",
   "python",
@@ -41,7 +41,7 @@ export const TS_SUFFIXES = [".ts", ".tsx", "js", "jsx", "mjs", "mts"];
 export const PY_SUFFIXES = [".py"];
 
 // from languageId to support language
-export function toSupportLanguage({
+export function toSupportedLanguage({
   languageId,
 }: {
   languageId: string;
