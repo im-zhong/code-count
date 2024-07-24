@@ -6,7 +6,7 @@ import { FileResult } from "../analyzer/types";
 import {
   SUPPORTED_LANGUAGES,
   toSupportedLanguage,
-} from "../conf/support-languages";
+} from "../common/support-languages";
 import { FolderCounter } from "./count-workspace";
 import * as vscode from "vscode";
 import { getGitIgnoreFilter } from "./git-ignore-filter";

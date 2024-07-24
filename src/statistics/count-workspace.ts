@@ -11,7 +11,7 @@ import ignore, { Ignore } from "ignore";
 import path from "path";
 import * as fs from "fs/promises";
 import { makeAnalyzer } from "../analyzer/factory";
-import { SUPPORTED_LANGUAGES } from "../conf/support-languages";
+import { SUPPORTED_LANGUAGES } from "../common/support-languages";
 import { WorkspaceCounter } from "./workspace-result";
 import { FileResult } from "../analyzer/types";
 import { Statistics } from "./types";

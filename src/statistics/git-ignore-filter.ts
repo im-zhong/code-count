@@ -12,7 +12,7 @@ import {
   CPP_SUFFIXES,
   TS_SUFFIXES,
   PY_SUFFIXES,
-} from "../conf/support-languages";
+} from "../common/support-languages";
 
 export class GitIgnoreFilter {
   private ig: Ignore | null = null;
