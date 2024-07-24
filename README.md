@@ -1,37 +1,35 @@
-# Code Count
+# Code Counter
 
-Inspired by linux cli tool wc, instead couting word, this tool will count lines of code for you.
+Inspired by linux cli tool **wc**, instead of counting words, this tool will **lazily** counting **all your codes** in your workspaces by lines while following your **.gitignore**!
 
 ## Features
 
-* Count lines of code in current file
-![example](assets/example1.png)
+* This extension activates lazily as you interact with any files in supported languages:
+  * c/c++
+  * python
+  * ts/js/tsx/jsx
+* It displays the count of code lines and comments of current active file directly in the status bar.
+* Additionally, it aggregates and shows the total line count for all files within the current workspace that match the language of the active file, while intelligently excluding files listed in your .gitignore.
+* TIPS: c/c++ are considering as one language when aggregates, and ts/js/tsx/jsx as well.
+
+![example](assets/example3.png)
+
 * Toggle the backgournd color in the editor by clicking the status bar item, which is useful when you think this tool maybe wrong, you could look at the class of each line directly. If you have seen any thing wired, please propose an [issue](https://github.com/im-zhong/code-count/issues) and let me know.
   * comments are shown in red,
   * codes are shown in green,
   * and if one line contains both code and comment, it will be shown in blue.
 
-![example](assets/example2.png)
+![example](assets/example4.png)
 
-## TODO
+### 0.2.0
 
-* [ ] add support for c/c++
-* [ ] add support for golang
-* [ ] add support for rust
-* [ ] add a command that statistics the whole workspace
-* [ ] rename to code counter
-* [ ] BUG: broken string will stuck the extension
-* [ ] add logs to each function's entrance and exit, so I could find the extension is stuck in which point
-* [ ] we could draw the code protion of different language like github webpage
-* [ ] fix a bug that string is span multi line, could stuck the extension
+* Add support for C/C++
+* Now this tool will counting all your codes in your workspaces by lines!
+* fix several bugs that could stuck the extension
 
-## Requirements
+### 0.1.2
 
-## Extension Settings
-
-## Known Issues
-
-## Release Notes
+fix a bug that could stuck the extension when analyzing comment string in python
 
 ### 0.1.0
 
@@ -43,9 +41,10 @@ Initial release of code count tool, support
 * JSX
 * python
 
-### 0.1.2
+## TODO
 
-fix a bug that could stuck the extension when analyzing comment string in python
+* [ ] add support for golang
+* [ ] add support for rust
 
 ---
 
