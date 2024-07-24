@@ -248,68 +248,45 @@ export abstract class Analyzer {
 
   skipString() {
     const delimiter = this.stringStream.getCurrentCharacter();
-    let isFindDelimiter = false;
-    let currentIdx = 0;
-    let slashSize = 0;
-    let offset = 0;
+    // first skip the first delimiter: ' or "
+    this.stringStream.addToCurrentOffset(delimiter.length);
 
-    for (;;) {
-      currentIdx = 0;
-      slashSize = 0;
-      offset = this.stringStream
+    let isFoundDelimiter = false;
+    let offset = -1;
+    while (
+      (offset = this.stringStream
         .getCurrentLine()
-        .indexOf(
-          delimiter,
-          this.stringStream.getCurrentOffset() + delimiter.length,
-        );
+        .indexOf(delimiter, this.stringStream.getCurrentOffset())) !== -1
+    ) {
+      // whatever, we need to pass the found delimiter
+      this.stringStream.setCurrentOffset(offset + delimiter.length);
 
-      while (offset < this.stringStream.getCurrentLine().length) {
-        currentIdx = offset - 1;
-        slashSize = 0;
-        // Look back to find and count backslashes
-        while (
-          this.stringStream.getCurrentLine()[currentIdx] === "\\" &&
-          currentIdx >= 0
-        ) {
-          ++slashSize;
-          --currentIdx;
-        }
-
-        if (slashSize % 2 === 0) {
-          // If slashSize is even, then it is not an escape sequence
-          // and we find the end of the string, make offset point to the
-          // next position of delimiter
-          ++offset;
-          isFindDelimiter = true;
-          break;
-        } else {
-          // Otherwise, it is an escape sequence
-          // and we need to find the next delimiter at the next position
-          offset = this.stringStream
-            .getCurrentLine()
-            .indexOf(delimiter, offset + delimiter.length);
-        }
-      }
-      this.stringStream.setCurrentOffset(offset);
-
-      if (isFindDelimiter) {
-        break;
+      // check if the delimiter is escaped
+      let currentIdx = offset - 1;
+      let slashSize = 0;
+      // Look back to find and count backslashes
+      while (
+        this.stringStream.getCurrentLine()[currentIdx] === "\\" &&
+        currentIdx >= 0
+      ) {
+        ++slashSize;
+        --currentIdx;
       }
 
-      // If we reach here, it means we cannot find the delimiter in this line
-      // Assuming GetLineAndResetOffset is an async method that fetches the next line
-      // and resets the offset. This method needs to be defined elsewhere.
-      if (!this.getLineAndResetOffset()) {
+      if (slashSize % 2 === 0) {
+        isFoundDelimiter = true;
         break;
       }
     }
 
-    this.setMultiLineClass({
-      lineBegin: this.lineBegin,
-      lineEnd: this.lineEnd,
+    if (!isFoundDelimiter) {
+      throw new Error("string not closed");
+    }
+
+    this.setLineClass({
+      lineNo: this.lineBegin,
       lineClass: LineClass.Code,
     });
-    this.lineBegin = this.lineEnd - 1;
   }
 
   isFoundEscapeSequence({ backLength }: { backLength: number }): boolean {
