@@ -164,7 +164,7 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
     vscode.window.onDidChangeActiveTextEditor(
       async (textEditor: vscode.TextEditor | undefined) => {
         if (textEditor) {
-          await saveFile(textEditor.document.uri);
+          await lookFile(textEditor.document.uri);
         }
 
         await updateStatusBarItem();
@@ -260,6 +260,38 @@ const deleteFile = async (uri: vscode.Uri) => {
     language: language,
     absolutePath: uri.fsPath,
   });
+};
+
+const lookFile = async (uri: vscode.Uri) => {
+  const { workspaceFolder, language } = (await needHandle(uri)) ?? {};
+  if (!workspaceFolder || !language) {
+    return;
+  }
+
+  // 无论如何，我们如果触发了全局统计
+  // 我们显然是不需要再次执行当前文件的统计的
+  await workspaceStatistics.triggerStatistic({
+    workspaceFolder,
+    language,
+  });
+
+  // 然后我们检查当前文件是否已经统计过了
+  // 如果统计过了，我们就不需要再次统计了
+  // 直接返回就行
+  // 如果没有统计过
+  // 那么就统计一下
+  const fileResult = workspaceStatistics.getFileResultOnlyLookTable({
+    workspaceName: workspaceFolder.name,
+    language,
+    absolutePath: uri.fsPath,
+  });
+  if (!fileResult) {
+    await workspaceStatistics.updateFile({
+      workspaceName: workspaceFolder.name,
+      language,
+      absolutePath: uri.fsPath,
+    });
+  }
 };
 
 const saveFile = async (uri: vscode.Uri) => {
