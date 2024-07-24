@@ -138,94 +138,94 @@ export class WorkspaceCounter {
   }
 
   // get the statistic of a certain file
-  async getStatistics({
-    workspaceFolder,
-    text,
-    languageId,
-    relativePath,
-  }: {
-    workspaceFolder?: vscode.WorkspaceFolder;
-    languageId: string;
-    text: string;
-    relativePath: string;
-  }): Promise<{
-    result?: FileResult;
-    totalCodes?: number;
-    totalComments?: number;
-  }> {
-    let totalCodes = 0;
-    let totalComments = 0;
-    let result = undefined;
+  // async getStatistics({
+  //   workspaceFolder,
+  //   text,
+  //   languageId,
+  //   relativePath,
+  // }: {
+  //   workspaceFolder?: vscode.WorkspaceFolder;
+  //   languageId: string;
+  //   text: string;
+  //   relativePath: string;
+  // }): Promise<{
+  //   result?: FileResult;
+  //   totalCodes?: number;
+  //   totalComments?: number;
+  // }> {
+  //   let totalCodes = 0;
+  //   let totalComments = 0;
+  //   let result = undefined;
 
-    // if (workspace in this.statistics) {
-    //   for (const [file, result] of Object.entries(
-    //     this.statistics[language][workspace]
-    //   )) {
-    //     totalCodes += result.codes;
-    //     totalComments += result.comments;
-    //   }
-    // }
+  //   // if (workspace in this.statistics) {
+  //   //   for (const [file, result] of Object.entries(
+  //   //     this.statistics[language][workspace]
+  //   //   )) {
+  //   //     totalCodes += result.codes;
+  //   //     totalComments += result.comments;
+  //   //   }
+  //   // }
 
-    // if no workspace, we do not need to analyze
-    if (!workspaceFolder) {
-      return {};
-    }
+  //   // if no workspace, we do not need to analyze
+  //   if (!workspaceFolder) {
+  //     return {};
+  //   }
 
-    // check if we need to initialize the workspace
-    const language = toSupportedLanguage({ languageId });
-    if (!language) {
-      return {};
-    }
+  //   // check if we need to initialize the workspace
+  //   const language = toSupportedLanguage({ languageId });
+  //   if (!language) {
+  //     return {};
+  //   }
 
-    // 不对，首先是，如果我们的workspace没有被初始化
-    // 如果该语言没有被初始化
-    // 如果该文件没有被初始化
-    // 那么我们就需要初始化
-    if (
-      !(workspaceFolder.name in this.statistics) ||
-      !(language in this.statistics[workspaceFolder.name]) ||
-      // 最后一条应该是不需要的
-      // 只有在没有这个language的情况下，我们才initialize整个workspace
-      // 在initialize之后，我们认为workspace已经被初始化了
-      !(relativePath in this.statistics[workspaceFolder.name][language])
-    ) {
-      console.log("need to inizialize workspace");
-      vscode.window.showInformationMessage("need to initialize workspace");
+  //   // 不对，首先是，如果我们的workspace没有被初始化
+  //   // 如果该语言没有被初始化
+  //   // 如果该文件没有被初始化
+  //   // 那么我们就需要初始化
+  //   if (
+  //     !(workspaceFolder.name in this.statistics) ||
+  //     !(language in this.statistics[workspaceFolder.name]) ||
+  //     // 最后一条应该是不需要的
+  //     // 只有在没有这个language的情况下，我们才initialize整个workspace
+  //     // 在initialize之后，我们认为workspace已经被初始化了
+  //     !(relativePath in this.statistics[workspaceFolder.name][language])
+  //   ) {
+  //     console.log("need to inizialize workspace");
+  //     vscode.window.showInformationMessage("need to initialize workspace");
 
-      await this.statistic({ workspace: workspaceFolder, language });
-    }
+  //     await this.statistic({ workspace: workspaceFolder, language });
+  //   }
 
-    // 如果在初始化完成之后，仍然没有当前文件，那么我们应该分析当前文件
-    // 并更新workspace的统计
+  //   // 如果在初始化完成之后，仍然没有当前文件，那么我们应该分析当前文件
+  //   // 并更新workspace的统计
 
-    // sum the total codes and comments
-    for (const [file, result] of Object.entries(
-      this.statistics[workspaceFolder.name][language]
-    )) {
-      totalCodes += result.codes;
-      totalComments += result.comments;
-    }
-    return {
-      result: this.statistics[workspaceFolder.name][language][relativePath],
-      totalCodes,
-      totalComments,
-    };
+  //   // sum the total codes and comments
+  //   for (const [file, result] of Object.entries(
+  //     this.statistics[workspaceFolder.name][language]
+  //   )) {
+  //     totalCodes += result.codes;
+  //     totalComments += result.comments;
+  //   }
+  //   return {
+  //     result: this.statistics[workspaceFolder.name][language][relativePath],
+  //     totalCodes,
+  //     totalComments,
+  //   };
 
-    // const analyzer = makeAnalyzer({
-    //   text: text,
-    //   languageId: languageId,
-    // });
-    // if (!analyzer) {
-    //   return { totalCodes, totalComments };
-    // }
+  //   // const analyzer = makeAnalyzer({
+  //   //   text: text,
+  //   //   languageId: languageId,
+  //   // });
+  //   // if (!analyzer) {
+  //   //   return { totalCodes, totalComments };
+  //   // }
 
-    // result = analyzer.analyze();
-    // if (!result) {
-    //   return { totalCodes, totalComments };
-    // }
+  //   // result = analyzer.analyze();
+  //   // if (!result) {
+  //   //   return { totalCodes, totalComments };
+  //   // }
 
-    // return { result, totalCodes, totalComments };
-  }
+  //   // return { result, totalCodes, totalComments };
+  // }
 
   // 提供一个函数，返回某个文件的结果
   // 不是，还是提供一些函数吧
@@ -233,18 +233,18 @@ export class WorkspaceCounter {
   getFileResultOnlyLookTable({
     workspaceName,
     language,
-    path,
+    absolutePath,
   }: {
     workspaceName: string;
     language: string;
-    path: string;
+    absolutePath: string;
   }): FileResult | undefined {
     if (
       workspaceName in this.statistics &&
       language in this.statistics[workspaceName] &&
-      path in this.statistics[workspaceName][language]
+      absolutePath in this.statistics[workspaceName][language]
     ) {
-      return this.statistics[workspaceName][language][path];
+      return this.statistics[workspaceName][language][absolutePath];
     }
     return undefined;
   }

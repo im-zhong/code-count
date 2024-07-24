@@ -207,7 +207,7 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
   );
 
   // update status bar item once at the beginning
-  await updateStatusBarItem();
+  // await updateStatusBarItem();
 }
 
 const needHandle = async (
@@ -324,6 +324,12 @@ async function updateStatusBarItem(): Promise<void> {
     return;
   }
 
+  const workspace = vscode.workspace.getWorkspaceFolder(editor.document.uri);
+  if (!workspace) {
+    statusBarItem.hide();
+    return;
+  }
+
   // get current active editor's relative path
   // if the file is not saved, the uri will be undefined
 
@@ -368,29 +374,48 @@ async function updateStatusBarItem(): Promise<void> {
   // Parameters: It takes a Uri object representing the file's location.
   // Return Value: It returns a WorkspaceFolder object that contains information about the workspace folder, such as its uri, name, and index. If the file is not contained in any workspace folder, it returns undefined.
 
-  const { result, totalCodes, totalComments } =
-    await workspaceStatistics.getStatistics({
-      workspaceFolder: vscode.workspace.getWorkspaceFolder(editor.document.uri),
-      languageId: editor.document.languageId,
-      text: editor.document.getText(),
-      relativePath: vscode.workspace.asRelativePath(editor.document.uri, false),
-    });
-  if (!result) {
+  // const { result, totalCodes, totalComments } =
+  //   await workspaceStatistics.getStatistics({
+  //     workspaceFolder: vscode.workspace.getWorkspaceFolder(editor.document.uri),
+  //     languageId: editor.document.languageId,
+  //     text: editor.document.getText(),
+  //     relativePath: vscode.workspace.asRelativePath(editor.document.uri, false),
+  //   });
+  // if (!result) {
+  //   statusBarItem.hide();
+  //   return;
+  // }
+
+  // 直接拿结果就ok
+  // 如果拿不到结果，我们就不展示了，
+  const fileResult = workspaceStatistics.getFileResultOnlyLookTable({
+    workspaceName: workspace.name,
+    language: toSupportedLanguage({ languageId: editor.document.languageId }),
+    absolutePath: editor.document.uri.fsPath,
+  });
+  if (!fileResult) {
     statusBarItem.hide();
     return;
   }
+
+  // get total result
+  const { totalCodes, totalComments } =
+    workspaceStatistics.getTotalCodesAndComments({
+      workspaceName: workspace.name,
+      language: toSupportedLanguage({ languageId: editor.document.languageId }),
+    });
 
   // const codePercentage =
   //   result.all > 0 ? Math.round((result.codes / result.all) * 100) : 0;
   // const commentPercentage =
   //   result.all > 0 ? Math.round((result.comments / result.all) * 100) : 0;
   // statusBarItem.text = `$(file-code) Codes: ${result.codes}(${codePercentage}%), Comments: ${result.comments}(${commentPercentage}%)`;
-  statusBarItem.text = `Codes: ${result.codes}/${totalCodes}, Comments: ${result.comments}/${totalComments}`;
+  statusBarItem.text = `Codes: ${fileResult.codes}/${totalCodes}, Comments: ${fileResult.comments}/${totalComments}`;
   statusBarItem.show();
 
   clearBackground({ editor });
   // 不行，我们还是要保存所有的结果，也就是FileResult
-  updateBackground({ editor, result });
+  updateBackground({ editor, result: fileResult });
 }
 
 function clearBackground({ editor }: { editor: vscode.TextEditor }) {

@@ -39,7 +39,13 @@ export const CPP_SUFFIXES = [
 
 export const TS_SUFFIXES = [".ts", ".tsx", "js", "jsx", "mjs", "mts"];
 
-export const PY_SUFFIXES = [".py"];
+export const PY_SUFFIXES = [".py", ".py.in"];
+
+export const supported_suffixes: { [key: string]: string[] } = {
+  cpp: CPP_SUFFIXES,
+  python: PY_SUFFIXES,
+  typescript: TS_SUFFIXES,
+};
 
 // from languageId to support language
 export function toSupportedLanguage({
@@ -69,7 +75,25 @@ export function getSupportedLanguageFromPath({
 }: {
   path: string;
 }): string | undefined {
-  return SUPPORTED_LANGUAGES.find((language) =>
-    path.endsWith(CPP_SUFFIXES.map((suffix) => suffix).join("|"))
-  );
+  // 或许可以使用glob来进行判断
+  // 或者使用匹配
+  for (const suffix of CPP_SUFFIXES) {
+    if (path.endsWith(suffix)) {
+      return "cpp";
+    }
+  }
+
+  for (const suffix of PY_SUFFIXES) {
+    if (path.endsWith(suffix)) {
+      return "python";
+    }
+  }
+
+  for (const suffix of TS_SUFFIXES) {
+    if (path.endsWith(suffix)) {
+      return "typescript";
+    }
+  }
+
+  return undefined;
 }

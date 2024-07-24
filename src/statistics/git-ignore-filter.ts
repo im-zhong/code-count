@@ -8,10 +8,8 @@ import ignore, { Ignore } from "ignore";
 import path from "path";
 import * as fs from "fs/promises";
 import {
-  SUPPORTED_LANGUAGES,
-  CPP_SUFFIXES,
-  TS_SUFFIXES,
-  PY_SUFFIXES,
+  toSupportedLanguage,
+  supported_suffixes,
 } from "../common/support-languages";
 
 export class GitIgnoreFilter {
@@ -44,56 +42,61 @@ export class GitIgnoreFilter {
   // 根据我们支持的语言的后缀，通过glob来查找文件
   // TODO: 你可以看到这里的代码是重复的
   // 我们应该把代表各种语言的后缀给提取出来，甚至可以做成一个配置？
-  async getAllCppFiles({ folder }: { folder: string }): Promise<string[]> {
-    let startTime = new Date().getTime();
+  // async getAllCppFiles({ folder }: { folder: string }): Promise<string[]> {
+  //   let startTime = new Date().getTime();
 
-    const patterns = CPP_SUFFIXES.map(
-      (suffix) => path.join(folder, "**", `*${suffix}`)
-      //path.join("**", `*${suffix}`)
-    );
-    // 其实我有点想知道
-    // 直接glob会拿到什么
-    // 这样反而会慢一些。。。
-    //
-    // const files = await glob(patterns, { cwd: folder });
-    // 我觉得我需要比较一下这几种方法的性能
-    const files = await glob(patterns);
-    const filtered_files = files.filter(
-      (file) => !this.ignores(path.relative(folder, file))
-    );
-    let endTime = new Date().getTime();
-    console.log(`folder prefix cost time: ${endTime - startTime}ms`);
+  //   const patterns = CPP_SUFFIXES.map(
+  //     (suffix) => path.join(folder, "**", `*${suffix}`)
+  //     //path.join("**", `*${suffix}`)
+  //   );
+  //   // 其实我有点想知道
+  //   // 直接glob会拿到什么
+  //   // 这样反而会慢一些。。。
+  //   //
+  //   // const files = await glob(patterns, { cwd: folder });
+  //   // 我觉得我需要比较一下这几种方法的性能
+  //   const files = await glob(patterns);
+  //   const filtered_files = files.filter(
+  //     (file) => !this.ignores(path.relative(folder, file))
+  //   );
+  //   let endTime = new Date().getTime();
+  //   console.log(`folder prefix cost time: ${endTime - startTime}ms`);
 
-    // now we use another method
-    // 这种方法太慢了
-    // startTime = new Date().getTime();
-    // const patterns2 = CPP_SUFFIXES.map((suffix) =>
-    //   path.join("**", `*${suffix}`)
-    // );
-    // const files2 = await glob(patterns2);
-    // const filtered_files2 = files2.filter((file) => !this.ignores(file));
-    // endTime = new Date().getTime();
-    // console.log(`cwd cost time: ${endTime - startTime}ms`);
+  //   // now we use another method
+  //   // 这种方法太慢了
+  //   // startTime = new Date().getTime();
+  //   // const patterns2 = CPP_SUFFIXES.map((suffix) =>
+  //   //   path.join("**", `*${suffix}`)
+  //   // );
+  //   // const files2 = await glob(patterns2);
+  //   // const filtered_files2 = files2.filter((file) => !this.ignores(file));
+  //   // endTime = new Date().getTime();
+  //   // console.log(`cwd cost time: ${endTime - startTime}ms`);
 
-    // return (await glob(patterns)).filter((file) => !this.ignores(file));
-    return filtered_files;
-  }
+  //   // return (await glob(patterns)).filter((file) => !this.ignores(file));
+  //   return filtered_files;
+  // }
 
-  async getAllTsFiles({ folder }: { folder: string }): Promise<string[]> {
-    // const suffixes = [".ts", ".tsx", "js", "jsx", "mjs", "mts"];
-    const patterns = TS_SUFFIXES.map((suffix) =>
-      path.join(folder, "**", `*${suffix}`)
-    );
-    return (await glob(patterns)).filter((file) => !this.ignores(file));
-  }
+  // async getAllTsFiles({ folder }: { folder: string }): Promise<string[]> {
+  //   // const suffixes = [".ts", ".tsx", "js", "jsx", "mjs", "mts"];
+  //   const patterns = TS_SUFFIXES.map((suffix) =>
+  //     path.join(folder, "**", `*${suffix}`)
+  //   );
+  //   return (await glob(patterns)).filter((file) => !this.ignores(file));
+  // }
 
-  async getAllPyFiles({ folder }: { folder: string }): Promise<string[]> {
-    // const suffixes = [".py"];
-    const patterns = PY_SUFFIXES.map((suffix) =>
-      path.join(folder, "**", `*${suffix}`)
-    );
-    return (await glob(patterns)).filter((file) => !this.ignores(file));
-  }
+  // async getAllPyFiles({ folder }: { folder: string }): Promise<string[]> {
+  //   // const suffixes = [".py"];
+  //   const patterns = PY_SUFFIXES.map((suffix) =>
+  //     path.join(folder, "**", `*${suffix}`)
+  //   );
+  //   const files = await glob(patterns);
+  //   // 草！这里忘了加relative！！！
+  //   // 其实仔细看所有的语言的getfiles逻辑都是一样的
+  //   // 我们应该提取extract这个逻辑
+  //   // 其实就是需要一个从语言到后缀的映射而已
+  //   return files.filter((file) => !this.ignores(file));
+  // }
 
   async getAllFiles({
     folder,
@@ -102,23 +105,22 @@ export class GitIgnoreFilter {
     folder: string;
     languageId: string;
   }): Promise<string[]> {
-    if (languageId === "python") {
-      return this.getAllPyFiles({ folder });
+    // TODO: 这里或许应该把languageId换成supportedlanguage
+    const language = toSupportedLanguage({ languageId });
+    if (!(language in supported_suffixes)) {
+      return [];
     }
-    if (
-      [
-        "typescript",
-        "javascript",
-        "typescriptreact",
-        "javascriptreact",
-      ].includes(languageId)
-    ) {
-      return this.getAllTsFiles({ folder });
-    }
-    if (["cpp", "c"].includes(languageId)) {
-      return this.getAllCppFiles({ folder });
-    }
-    return [];
+
+    const suffixes = supported_suffixes[language];
+    const patterns = suffixes.map(
+      (suffix) => path.join(folder, "**", `*${suffix}`)
+      //path.join("**", `*${suffix}`)
+    );
+    const files = await glob(patterns);
+    const filtered_files = files.filter(
+      (file) => !this.ignores(path.relative(folder, file))
+    );
+    return filtered_files;
   }
 }
 

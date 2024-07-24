@@ -79,8 +79,8 @@ export class FolderCounter {
       }
       // result.file = file;
       // to relative path
-      const relativePath = path.relative(this.folder.uri.fsPath, file);
-      this.results[relativePath] = result;
+      // const relativePath = path.relative(this.folder.uri.fsPath, file);
+      this.results[file] = result;
     }
     return this.results;
   }
