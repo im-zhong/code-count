@@ -113,14 +113,14 @@ import * as vscode from "vscode";
 import { LineClass } from "./analyzer/types";
 import { FileResult } from "./analyzer/types";
 import { toSupportedLanguage } from "./common/support-languages";
-import { WorkspaceCounter } from "./statistics/workspace-result";
+import { WorkspaceCounter } from "./counter/workspace-counter";
 import { getSupportedLanguageFromPath } from "./common/support-languages";
-import { getGitIgnoreFilter } from "./statistics/git-ignore-filter";
+import { getGitIgnoreFilter } from "./filter/git-ignore-filter";
 import path from "path";
-import { filterManager } from "./statistics/git-ignore-filter";
+import { filterManager } from "./filter/filter-manager";
 
 let statusBarItem: vscode.StatusBarItem;
-let workspaceStatistics = new WorkspaceCounter();
+let workspaceCounter = new WorkspaceCounter();
 
 // https://github.com/microsoft/vscode-extension-samples/issues/22
 // decorationType should be created only once
@@ -255,7 +255,7 @@ const deleteFile = async (uri: vscode.Uri) => {
   }
   const { workspaceFolder, language } = r;
 
-  workspaceStatistics.deleteFile({
+  workspaceCounter.deleteFile({
     workspaceName: workspaceFolder.name,
     language: language,
     absolutePath: uri.fsPath,
@@ -270,7 +270,7 @@ const lookFile = async (uri: vscode.Uri) => {
 
   // 无论如何，我们如果触发了全局统计
   // 我们显然是不需要再次执行当前文件的统计的
-  await workspaceStatistics.triggerStatistic({
+  await workspaceCounter.triggerStatistic({
     workspaceFolder,
     language,
   });
@@ -280,13 +280,13 @@ const lookFile = async (uri: vscode.Uri) => {
   // 直接返回就行
   // 如果没有统计过
   // 那么就统计一下
-  const fileResult = workspaceStatistics.getFileResultOnlyLookTable({
+  const fileResult = workspaceCounter.getFileResultOnlyLookTable({
     workspaceName: workspaceFolder.name,
     language,
     absolutePath: uri.fsPath,
   });
   if (!fileResult) {
-    await workspaceStatistics.updateFile({
+    await workspaceCounter.updateFile({
       workspaceName: workspaceFolder.name,
       language,
       absolutePath: uri.fsPath,
@@ -313,7 +313,7 @@ const saveFile = async (uri: vscode.Uri) => {
 
   // 无论如何，我们如果触发了全局统计
   // 我们显然是不需要再次执行当前文件的统计的
-  const isTriggered = await workspaceStatistics.triggerStatistic({
+  const isTriggered = await workspaceCounter.triggerStatistic({
     workspaceFolder,
     language,
   });
@@ -321,7 +321,7 @@ const saveFile = async (uri: vscode.Uri) => {
   // 但是，只要没有触发，那么我们最好是重新统计并更新一下
   if (!isTriggered) {
     // 而且对于文件的更新操作，让counter来代劳就ok啦
-    await workspaceStatistics.updateFile({
+    await workspaceCounter.updateFile({
       workspaceName: workspaceFolder.name,
       language,
       absolutePath: uri.fsPath,
@@ -344,7 +344,7 @@ const saveFile = async (uri: vscode.Uri) => {
 // 就告诉我们保存了哪个workspace下面的.gitignore就ok了
 const saveGitIgnore = async ({ workspaceName }: { workspaceName: string }) => {
   filterManager.deleteFilter({ workspaceName });
-  workspaceStatistics.deleteWorkspace({
+  workspaceCounter.deleteWorkspace({
     workspaceName,
   });
 };
@@ -420,7 +420,7 @@ async function updateStatusBarItem(): Promise<void> {
 
   // 直接拿结果就ok
   // 如果拿不到结果，我们就不展示了，
-  const fileResult = workspaceStatistics.getFileResultOnlyLookTable({
+  const fileResult = workspaceCounter.getFileResultOnlyLookTable({
     workspaceName: workspace.name,
     language: toSupportedLanguage({ languageId: editor.document.languageId }),
     absolutePath: editor.document.uri.fsPath,
@@ -432,7 +432,7 @@ async function updateStatusBarItem(): Promise<void> {
 
   // get total result
   const { totalCodes, totalComments } =
-    workspaceStatistics.getTotalCodesAndComments({
+    workspaceCounter.getTotalCodesAndComments({
       workspaceName: workspace.name,
       language: toSupportedLanguage({ languageId: editor.document.languageId }),
     });

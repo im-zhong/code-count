@@ -177,27 +177,3 @@ export function getGitIgnoreFilter({
   // 我们的filter也要发生变化
   return newGitIgnoreFilter({ folder: workspace });
 }
-
-// 我们需要一个filter的manager
-// 这个manager会帮助我们维护一个filter
-class FilterManager {
-  private filters: { [key: string]: GitIgnoreFilter } = {};
-  async getFilter({
-    workspace,
-  }: {
-    workspace: vscode.WorkspaceFolder;
-  }): Promise<GitIgnoreFilter> {
-    if (!(workspace.name in this.filters)) {
-      this.filters[workspace.name] = await getGitIgnoreFilter({ workspace });
-    }
-    return this.filters[workspace.name];
-  }
-
-  async deleteFilter({ workspaceName }: { workspaceName: string }) {
-    if (workspaceName in this.filters) {
-      delete this.filters[workspaceName];
-    }
-  }
-}
-
-export const filterManager = new FilterManager();
