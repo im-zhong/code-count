@@ -8,8 +8,8 @@ export enum LineClass {
   Code,
   LineComment,
   BlockComment,
-  CodeComment,
   Comment,
+  CodeComment,
 }
 
 export interface FileKey {
