@@ -6,19 +6,13 @@
 // https://github.com/isaacs/node-glob
 
 import * as vscode from "vscode";
-import { glob } from "glob";
-import ignore, { Ignore } from "ignore";
-import path from "path";
-import * as fs from "fs/promises";
-import { makeAnalyzer } from "../analyzer/factory";
-import { SUPPORTED_LANGUAGES } from "../common/support-languages";
-import { WorkspaceCounter } from "./workspace-counter";
-import { FileResult } from "../analyzer/types";
-import { Statistics } from "../common/types";
+
+import { FileResult, Statistics, FolderResult } from "../common/types";
 import { GitIgnoreFilter } from "../filter/git-ignore-filter";
-import { FolderResult } from "../common/types";
+
 // const ig = ignore().add(["**/node_modules/**", "**/.git/**"]);
 import { FileCounter } from "./file-counter";
+
 // const paths = [
 //   ".abc/a.js", // filtered out
 //   ".abc/d/e.js", // included

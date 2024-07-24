@@ -1,8 +1,9 @@
 // 2024/7/8
 // zhangzhong
 
+import { LineClass } from "../common/types";
+
 import { Analyzer } from "./base-analyzer";
-import { LineClass } from "./types";
 
 export class PyAnalyzer extends Analyzer {
   constructor({ text }: { text: string }) {
@@ -80,7 +81,7 @@ export class PyAnalyzer extends Analyzer {
       .getCurrentLine()
       .slice(
         this.stringStream.getCurrentOffset(),
-        this.stringStream.getCurrentOffset() + 3
+        this.stringStream.getCurrentOffset() + 3,
       );
 
     // offset -> "...["]""..."

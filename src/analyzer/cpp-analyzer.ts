@@ -1,8 +1,9 @@
 // 2024/7/16
 // zhangzhong
 
+import { LineClass } from "../common/types";
+
 import { Analyzer } from "./base-analyzer";
-import { LineClass } from "./types";
 
 export class CppAnalyzer extends Analyzer {
   constructor({ text }: { text: string }) {

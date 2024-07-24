@@ -1,10 +1,10 @@
 // 2024/7/8
 // zhangzhong
 
-import { FileResult, LineClass } from "./types";
-import { BitVector } from "./bit-vector";
-import { StringStream } from "./string-stream";
-import { isSpace, lineClassestoResult } from "./common";
+import { FileResult, LineClass } from "../common/types";
+import { BitVector } from "../lib/bit-vector";
+import { StringStream } from "../lib/string-stream";
+import { isSpace } from "../lib/string-utils";
 
 export abstract class Analyzer {
   protected lineBegin: number;
@@ -44,7 +44,7 @@ export abstract class Analyzer {
         while (
           (offset = this.findFirstNotBlank(
             this.stringStream.getCurrentLine(),
-            this.stringStream.getCurrentOffset()
+            this.stringStream.getCurrentOffset(),
           )) !== -1
         ) {
           this.stringStream.setCurrentOffset(offset);
@@ -68,10 +68,54 @@ export abstract class Analyzer {
         this.lineBegin = this.lineEnd;
       }
 
-      return lineClassestoResult({ lineClasses: this.lineClasses });
+      return this.lineClassestoResult({ lineClasses: this.lineClasses });
     } catch (e) {
       return null;
     }
+  }
+
+  lineClassestoResult({
+    lineClasses,
+  }: {
+    lineClasses: BitVector[];
+  }): FileResult {
+    const result: FileResult = {
+      all: lineClasses.length,
+      codes: 0,
+      comments: 0,
+      lineClasses: [],
+    };
+
+    let isCode = false;
+    let isComment = false;
+    for (let i = 0; i < lineClasses.length; i++) {
+      const lineClass = lineClasses[i];
+      isCode = false;
+      isComment = false;
+
+      if (
+        lineClass.testBit(LineClass.LineComment) ||
+        lineClass.testBit(LineClass.BlockComment)
+      ) {
+        isComment = true;
+        result.comments++;
+      }
+      if (lineClass.testBit(LineClass.Code)) {
+        isCode = true;
+        result.codes++;
+      }
+
+      if (isCode && isComment) {
+        result.lineClasses.push(LineClass.CodeComment);
+      } else if (isCode) {
+        result.lineClasses.push(LineClass.Code);
+      } else if (isComment) {
+        result.lineClasses.push(LineClass.Comment);
+      } else {
+        result.lineClasses.push(LineClass.Blank);
+      }
+    }
+    return result;
   }
 
   getLineAndResetOffset(): string | null {
@@ -209,14 +253,14 @@ export abstract class Analyzer {
     let slashSize = 0;
     let offset = 0;
 
-    while (true) {
+    for (;;) {
       currentIdx = 0;
       slashSize = 0;
       offset = this.stringStream
         .getCurrentLine()
         .indexOf(
           delimiter,
-          this.stringStream.getCurrentOffset() + delimiter.length
+          this.stringStream.getCurrentOffset() + delimiter.length,
         );
 
       while (offset < this.stringStream.getCurrentLine().length) {
@@ -296,7 +340,7 @@ export abstract class Analyzer {
       .getCurrentLine()
       .slice(
         this.stringStream.getCurrentOffset() + 1,
-        this.stringStream.getCurrentOffset() + 2
+        this.stringStream.getCurrentOffset() + 2,
       );
     const rawStringTail = rawStringHead;
 

@@ -3,12 +3,12 @@
 // https://code.visualstudio.com/docs/languages/identifiers
 
 import { Analyzer } from "./base-analyzer";
+import { CppAnalyzer } from "./cpp-analyzer";
 import { PyAnalyzer } from "./py-analyzer";
 import { TsAnalyzer } from "./ts-analyzer";
-import { CppAnalyzer } from "./cpp-analyzer";
 
 // make the analyzer
-export function makeAnalyzer({
+export function newAnalyzer({
   text,
   languageId,
 }: {
@@ -20,7 +20,7 @@ export function makeAnalyzer({
   }
   if (
     ["typescript", "javascript", "typescriptreact", "javascriptreact"].includes(
-      languageId
+      languageId,
     )
   ) {
     return new TsAnalyzer({ text });

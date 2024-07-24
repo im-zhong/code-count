@@ -2,8 +2,9 @@
 // zhangzhong
 
 import * as fs from "fs/promises";
-import { makeAnalyzer } from "../analyzer/factory";
-import { FileResult } from "../analyzer/types";
+
+import { newAnalyzer } from "../analyzer/factory";
+import { FileResult } from "../common/types";
 
 export class FileCounter {
   private language: string;
@@ -24,7 +25,7 @@ export class FileCounter {
     // first read the file
     const content = await fs.readFile(this.absolutePath, { encoding: "utf8" });
     // then make analyzer
-    const analyzer = makeAnalyzer({
+    const analyzer = newAnalyzer({
       text: content,
       languageId: this.language,
     });

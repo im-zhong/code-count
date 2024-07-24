@@ -109,15 +109,18 @@
 // vscode.workspace.onDidOpenTextDocument
 // This event is fired when a text document is opened. This includes opening a document in an editor, but also other scenarios where a document is opened in the background without an associated editor, such as when a document is opened for background processing by an extension
 
-import * as vscode from "vscode";
-import { LineClass } from "./analyzer/types";
-import { FileResult } from "./analyzer/types";
-import { toSupportedLanguage } from "./common/support-languages";
-import { WorkspaceCounter } from "./counter/workspace-counter";
-import { getSupportedLanguageFromPath } from "./common/support-languages";
-import { getGitIgnoreFilter } from "./filter/git-ignore-filter";
 import path from "path";
+
+import * as vscode from "vscode";
+
+import {
+  toSupportedLanguage,
+  getSupportedLanguageFromPath,
+} from "./common/support-languages";
+import { LineClass, FileResult } from "./common/types";
+import { WorkspaceCounter } from "./counter/workspace-counter";
 import { filterManager } from "./filter/filter-manager";
+import { getGitIgnoreFilter } from "./filter/git-ignore-filter";
 
 let statusBarItem: vscode.StatusBarItem;
 let workspaceCounter = new WorkspaceCounter();
@@ -146,13 +149,13 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
     vscode.commands.registerCommand(commandId, () => {
       backgroundToggle = !backgroundToggle;
       updateStatusBarItem();
-    })
+    }),
   );
 
   // create a new status bar item that we can now manage
   statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
-    100
+    100,
   );
   statusBarItem.command = commandId;
   subscriptions.push(statusBarItem);
@@ -168,8 +171,8 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
         }
 
         await updateStatusBarItem();
-      }
-    )
+      },
+    ),
   );
 
   subscriptions.push(
@@ -177,8 +180,8 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
       async (document: vscode.TextDocument) => {
         await saveFile(document.uri);
         await updateStatusBarItem();
-      }
-    )
+      },
+    ),
   );
 
   subscriptions.push(
@@ -188,7 +191,7 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
       event.files.forEach(async (uri: vscode.Uri) => {
         deleteFile(uri);
       });
-    })
+    }),
   );
 
   subscriptions.push(
@@ -203,7 +206,7 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
         // and we should extract the save file impl
         await saveFile(newUri);
       });
-    })
+    }),
   );
 
   // update status bar item once at the beginning
@@ -211,7 +214,7 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
 }
 
 const needHandle = async (
-  uri: vscode.Uri
+  uri: vscode.Uri,
 ): Promise<
   | {
       workspaceFolder: vscode.WorkspaceFolder;
@@ -473,7 +476,7 @@ function updateBackground({
   for (let lineNo = 0; lineNo < result.lineClasses.length; lineNo++) {
     const range = new vscode.Range(
       new vscode.Position(lineNo, 0),
-      new vscode.Position(lineNo, editor.document.lineAt(lineNo).text.length)
+      new vscode.Position(lineNo, editor.document.lineAt(lineNo).text.length),
     );
 
     const lineClass = result.lineClasses[lineNo];

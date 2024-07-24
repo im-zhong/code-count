@@ -2,17 +2,15 @@
 // zhangzhong
 
 import * as fs from "fs/promises";
-import { FileResult } from "../analyzer/types";
-import {
-  SUPPORTED_LANGUAGES,
-  toSupportedLanguage,
-} from "../common/support-languages";
-import { FolderCounter } from "./folder-counter";
-import * as vscode from "vscode";
-import { getGitIgnoreFilter } from "../filter/git-ignore-filter";
-import { FolderResult, WorkspaceStatistics } from "../common/types";
 
-import { makeAnalyzer } from "../analyzer/factory";
+import * as vscode from "vscode";
+
+import { newAnalyzer } from "../analyzer/factory";
+import { FileResult, WorkspaceStatistics } from "../common/types";
+import { getGitIgnoreFilter } from "../filter/git-ignore-filter";
+
+import { FolderCounter } from "./folder-counter";
+
 // 即然如此 这个类型定义是统一的
 // 那么我们可以提取出来 放在types里面
 
@@ -118,7 +116,7 @@ export class WorkspaceCounter {
     // FileCounter should take this responsibility
     const content = await fs.readFile(absolutePath, { encoding: "utf8" });
     // then make analyzer
-    const analyzer = makeAnalyzer({
+    const analyzer = newAnalyzer({
       text: content,
       languageId: language,
     });
@@ -265,30 +263,31 @@ export class WorkspaceCounter {
   } {
     let totalCodes = 0;
     let totalComments = 0;
-    for (const [file, result] of Object.entries(
-      this.statistics[workspaceName][language]
+
+    for (const fileResult of Object.values(
+      this.statistics[workspaceName][language],
     )) {
-      totalCodes += result.codes;
-      totalComments += result.comments;
+      totalCodes += fileResult.codes;
+      totalComments += fileResult.comments;
     }
     return { totalCodes, totalComments };
   }
 
   // statistic of the whole workspace of a cetrain language
-  async statistic({
-    workspace,
-    language,
-  }: {
-    workspace: vscode.WorkspaceFolder;
-    language: string;
-  }): Promise<void> {
-    // 遍历我们支持的语言
-    // 为了尽可能加快加载速度
-    // 对所有语言的分析都应该是lazy的
-    // 也就是说我们应该支持某个worksapce的某个语言的分析
-    // TODO：
-    // 我还需要维护gitignore文件 当保存文件的时候还需要分析gitignore带来的影响
-  }
+  // async statistic({
+  //   workspace,
+  //   language,
+  // }: {
+  //   workspace: vscode.WorkspaceFolder;
+  //   language: string;
+  // }): Promise<void> {
+  //   // 遍历我们支持的语言
+  //   // 为了尽可能加快加载速度
+  //   // 对所有语言的分析都应该是lazy的
+  //   // 也就是说我们应该支持某个worksapce的某个语言的分析
+  //   // TODO：
+  //   // 我还需要维护gitignore文件 当保存文件的时候还需要分析gitignore带来的影响
+  // }
 
   async triggerStatistic({
     workspaceFolder,
