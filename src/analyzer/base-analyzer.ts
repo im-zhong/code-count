@@ -261,19 +261,8 @@ export abstract class Analyzer {
       // whatever, we need to pass the found delimiter
       this.stringStream.setCurrentOffset(offset + delimiter.length);
 
-      // check if the delimiter is escaped
-      let currentIdx = offset - 1;
-      let slashSize = 0;
-      // Look back to find and count backslashes
-      while (
-        this.stringStream.getCurrentLine()[currentIdx] === "\\" &&
-        currentIdx >= 0
-      ) {
-        ++slashSize;
-        --currentIdx;
-      }
-
-      if (slashSize % 2 === 0) {
+      // then check if it is a escape sequence, if not, we find the end of the string
+      if (!this.isFoundEscapeSequence({ backLength: delimiter.length + 1 })) {
         isFoundDelimiter = true;
         break;
       }
