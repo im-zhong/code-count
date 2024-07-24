@@ -12,14 +12,14 @@ Inspired by linux cli tool **wc**, instead of counting words, this tool will **l
 * Additionally, it aggregates and shows the total line count for all files within the current workspace that match the language of the active file, while intelligently excluding files listed in your .gitignore.
 * TIPS: c/c++ are considering as one language when aggregates, and ts/js/tsx/jsx as well.
 
-![example](assets/example3.png)
+![example](assets/example1.png)
 
 * Toggle the backgournd color in the editor by clicking the status bar item, which is useful when you think this tool maybe wrong, you could look at the class of each line directly. If you have seen any thing wired, please propose an [issue](https://github.com/im-zhong/code-count/issues) and let me know.
   * comments are shown in red,
   * codes are shown in green,
   * and if one line contains both code and comment, it will be shown in blue.
 
-![example](assets/example4.png)
+![example](assets/example2.png)
 
 ### 0.2.0
 
