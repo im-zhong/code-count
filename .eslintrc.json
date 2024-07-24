@@ -70,5 +70,12 @@
       }
     ]
   },
-  "ignorePatterns": ["out", "dist", "**/*.d.ts", "node_modules", ".vscode-test"]
+  "ignorePatterns": [
+    "out",
+    "dist",
+    "**/*.d.ts",
+    "node_modules",
+    ".vscode-test",
+    "**/test/**"
+  ]
 }

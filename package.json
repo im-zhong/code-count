@@ -1,9 +1,9 @@
 {
   "name": "code-count",
   "displayName": "Code Count",
-  "description": "Count your code by lines!",
+  "description": "Count all your codes in your workspaces by lines!",
   "icon": "assets/icon.png",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "publisher": "im-zhong",
   "engines": {
     "vscode": "^1.74.0"
@@ -23,14 +23,7 @@
     "onStartupFinished"
   ],
   "main": "./dist/extension.js",
-  "contributes": {
-    "commands": [
-      {
-        "command": "code-count.countWorkspace",
-        "title": "Code Count: Count Workspace"
-      }
-    ]
-  },
+  "contributes": {},
   "scripts": {
     "vscode:prepublish": "npm run package",
     "compile": "npm run check-types && npm run lint && node esbuild.js",
@@ -46,10 +39,9 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.7",
     "@types/node": "^20.14.11",
-    "@types/vscode": "^1.91.0",
+    "@types/vscode": "^1.74.0",
     "@typescript-eslint/eslint-plugin": "^7.14.1",
     "@typescript-eslint/parser": "^7.11.0",
     "@vscode/test-cli": "^0.0.9",
