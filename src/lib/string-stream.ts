@@ -12,10 +12,10 @@ export class StringStream {
     this.lines = text.split("\n");
   }
 
-  getNextLine(): string | null {
+  getNextLine(): string | undefined {
     this.currentLineNo++;
     if (this.currentLineNo >= this.lines.length) {
-      return null;
+      return undefined;
     }
     this.currentOffset = 0;
     return this.lines[this.currentLineNo];

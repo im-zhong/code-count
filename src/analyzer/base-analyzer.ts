@@ -3,17 +3,17 @@
 
 import { FileResult, LineClass } from "../common/types";
 import { BitVector } from "../lib/bit-vector";
+import { LineSpan } from "../lib/line-span";
 import { StringStream } from "../lib/string-stream";
 import { isSpace } from "../lib/string-utils";
 
 export abstract class Analyzer {
-  protected lineBegin: number;
-  protected lineEnd: number;
   private lineCommentHead: string;
   private blockCommentHead: string;
   private blockCommentTail: string;
-  private lineClasses: BitVector[]; // use an array to store the class of each line
   protected stringStream: StringStream;
+  protected lineSpan: LineSpan;
+  private lineClasses: BitVector[]; // use an array to store the class of each line
 
   constructor({
     lineCommentHead,
@@ -26,13 +26,16 @@ export abstract class Analyzer {
     blockCommentTail: string;
     text: string;
   }) {
-    this.lineBegin = 0;
-    this.lineEnd = 0;
     this.lineCommentHead = lineCommentHead;
     this.blockCommentHead = blockCommentHead;
     this.blockCommentTail = blockCommentTail;
-    this.lineClasses = [];
     this.stringStream = new StringStream(text);
+    this.lineSpan = new LineSpan();
+    this.lineClasses = [];
+  }
+
+  init(): void {
+    this.lineSpan.clear();
   }
 
   analyze(): FileResult | undefined {
@@ -40,7 +43,7 @@ export abstract class Analyzer {
       this.init();
 
       let offset = 0;
-      while (this.getLineAndResetOffset() !== null) {
+      while (this.getLineAndResetOffset() !== undefined) {
         while (
           (offset = this.findFirstNotBlank(
             this.stringStream.getCurrentLine(),
@@ -57,74 +60,18 @@ export abstract class Analyzer {
           } else if (this.isBlockCommentHead()) {
             this.skipBlockComment();
           } else {
-            this.setLineClass({
-              lineNo: this.lineBegin,
-              lineClass: LineClass.Code,
-            });
+            this.setLineClass({ lineClass: LineClass.Code });
             this.stringStream.addToCurrentOffset(1);
           }
         }
         // to the next line
-        this.lineBegin = this.lineEnd;
+        this.lineSpan.resetForNextLine();
       }
 
-      return this.lineClassestoResult({ lineClasses: this.lineClasses });
+      return this.lineClassestoFileResult({ lineClasses: this.lineClasses });
     } catch (e) {
       return undefined;
     }
-  }
-
-  lineClassestoResult({
-    lineClasses,
-  }: {
-    lineClasses: BitVector[];
-  }): FileResult {
-    const result: FileResult = {
-      lines: lineClasses.length,
-      codes: 0,
-      comments: 0,
-      lineClasses: [],
-    };
-
-    let isCode = false;
-    let isComment = false;
-    for (let i = 0; i < lineClasses.length; i++) {
-      const lineClass = lineClasses[i];
-      isCode = false;
-      isComment = false;
-
-      if (
-        lineClass.testBit(LineClass.LineComment) ||
-        lineClass.testBit(LineClass.BlockComment)
-      ) {
-        isComment = true;
-        result.comments++;
-      }
-      if (lineClass.testBit(LineClass.Code)) {
-        isCode = true;
-        result.codes++;
-      }
-
-      if (isCode && isComment) {
-        result.lineClasses.push(LineClass.CodeComment);
-      } else if (isCode) {
-        result.lineClasses.push(LineClass.Code);
-      } else if (isComment) {
-        result.lineClasses.push(LineClass.Comment);
-      } else {
-        result.lineClasses.push(LineClass.Blank);
-      }
-    }
-    return result;
-  }
-
-  getLineAndResetOffset(): string | null {
-    if (this.stringStream.getNextLine() !== null) {
-      this.lineEnd++;
-      this.lineClasses.push(new BitVector());
-      return this.stringStream.getCurrentLine();
-    }
-    return null;
   }
 
   findFirstNotBlank(line: string, offset: number): number {
@@ -134,45 +81,6 @@ export abstract class Analyzer {
       }
     }
     return -1;
-  }
-
-  init(): void {
-    this.lineBegin = 0;
-    this.lineEnd = 0;
-  }
-
-  setLineClass({
-    lineNo,
-    lineClass,
-  }: {
-    lineNo: number;
-    lineClass: LineClass;
-  }) {
-    this.lineClasses[lineNo].setBit(lineClass);
-  }
-
-  setMultiLineClass({
-    lineBegin,
-    lineEnd,
-    lineClass,
-  }: {
-    lineBegin: number;
-    lineEnd: number;
-    lineClass: LineClass;
-  }) {
-    for (let i = lineBegin; i < lineEnd; i++) {
-      this.setLineClass({ lineNo: i, lineClass });
-    }
-  }
-
-  isStringHeadImpl({
-    line,
-    offset,
-  }: {
-    line: string;
-    offset: number;
-  }): boolean {
-    return line[offset] === '"' || line[offset] === "'";
   }
 
   isStringHead(): boolean {
@@ -196,6 +104,16 @@ export abstract class Analyzer {
     return false;
   }
 
+  isStringHeadImpl({
+    line,
+    offset,
+  }: {
+    line: string;
+    offset: number;
+  }): boolean {
+    return line[offset] === '"' || line[offset] === "'" || line[offset] === "`";
+  }
+
   isLineCommentHead(): boolean {
     const line = this.stringStream.getCurrentLine();
     const offset = this.stringStream.getCurrentOffset();
@@ -212,38 +130,6 @@ export abstract class Analyzer {
       line.slice(offset, offset + this.blockCommentHead.length) ===
       this.blockCommentHead
     );
-  }
-
-  // all skip function should set the current offset correctly
-  // before call this function, make sure you already skip the head of the delimiter
-  skipUntilFindDelimiter({
-    firstSkipLength,
-    delimiter,
-    lineClass,
-  }: {
-    firstSkipLength: number;
-    delimiter: string;
-    lineClass: LineClass;
-  }) {
-    // skip the head of the delimiter first
-    this.stringStream.addToCurrentOffset(firstSkipLength);
-
-    let offset = 0;
-    while (
-      (offset = this.stringStream
-        .getCurrentLine()
-        .indexOf(delimiter, this.stringStream.getCurrentOffset())) === -1
-    ) {
-      this.getLineAndResetOffset();
-    }
-    this.stringStream.setCurrentOffset(offset + delimiter.length);
-
-    this.setMultiLineClass({
-      lineBegin: this.lineBegin,
-      lineEnd: this.lineEnd,
-      lineClass,
-    });
-    this.lineBegin = this.lineEnd - 1;
   }
 
   skipString() {
@@ -272,10 +158,7 @@ export abstract class Analyzer {
       throw new Error("string not closed");
     }
 
-    this.setLineClass({
-      lineNo: this.lineBegin,
-      lineClass: LineClass.Code,
-    });
+    this.setLineClass({ lineClass: LineClass.Code });
   }
 
   isFoundEscapeSequence({ backLength }: { backLength: number }): boolean {
@@ -320,16 +203,15 @@ export abstract class Analyzer {
   skipLineComment() {
     // deal with '\' at the end of line
     while (this.stringStream.getCurrentLine().slice(-1) === "\\") {
-      this.getLineAndResetOffset();
+      if (this.getLineAndResetOffset() === undefined) {
+        break;
+      }
     }
 
     this.stringStream.setCurrentOffset(-1);
-    this.setMultiLineClass({
-      lineBegin: this.lineBegin,
-      lineEnd: this.lineEnd,
+    this.setLineClass({
       lineClass: LineClass.LineComment,
     });
-    this.lineBegin = this.lineEnd - 1;
   }
 
   skipBlockComment() {
@@ -338,5 +220,100 @@ export abstract class Analyzer {
       delimiter: this.blockCommentTail,
       lineClass: LineClass.BlockComment,
     });
+  }
+
+  // all skip function should set the current offset correctly
+  // before call this function, make sure you already skip the head of the delimiter
+  skipUntilFindDelimiter({
+    firstSkipLength,
+    delimiter,
+    lineClass,
+  }: {
+    firstSkipLength: number;
+    delimiter: string;
+    lineClass: LineClass;
+  }) {
+    // skip the head of the delimiter first
+    this.stringStream.addToCurrentOffset(firstSkipLength);
+
+    let offset = 0;
+    while (
+      (offset = this.stringStream
+        .getCurrentLine()
+        .indexOf(delimiter, this.stringStream.getCurrentOffset())) === -1
+    ) {
+      if (this.getLineAndResetOffset() === undefined) {
+        throw new Error(`${delimiter} not closed`);
+      }
+    }
+    this.stringStream.setCurrentOffset(offset + delimiter.length);
+
+    this.setLineClass({
+      lineClass,
+    });
+  }
+
+  getLineAndResetOffset(): string | undefined {
+    if (this.stringStream.getNextLine() !== undefined) {
+      this.lineSpan.nextLine();
+      this.lineClasses.push(new BitVector());
+      return this.stringStream.getCurrentLine();
+    }
+    return undefined;
+  }
+
+  setLineClass({ lineClass }: { lineClass: LineClass }) {
+    for (
+      let i = this.lineSpan.getLineBegin();
+      i < this.lineSpan.getLineEnd();
+      i++
+    ) {
+      this.lineClasses[i].setBit(lineClass);
+    }
+    this.lineSpan.resetForNextToken();
+  }
+
+  lineClassestoFileResult({
+    lineClasses,
+  }: {
+    lineClasses: BitVector[];
+  }): FileResult {
+    const result: FileResult = {
+      lines: lineClasses.length,
+      codes: 0,
+      comments: 0,
+      lineClasses: [],
+    };
+
+    let isCode = false;
+    let isComment = false;
+    for (let i = 0; i < lineClasses.length; i++) {
+      const lineClass = lineClasses[i];
+      isCode = false;
+      isComment = false;
+
+      if (
+        lineClass.testBit(LineClass.LineComment) ||
+        lineClass.testBit(LineClass.BlockComment)
+      ) {
+        isComment = true;
+        result.comments++;
+      }
+      if (lineClass.testBit(LineClass.Code)) {
+        isCode = true;
+        result.codes++;
+      }
+
+      if (isCode && isComment) {
+        result.lineClasses.push(LineClass.CodeComment);
+      } else if (isCode) {
+        result.lineClasses.push(LineClass.Code);
+      } else if (isComment) {
+        result.lineClasses.push(LineClass.Comment);
+      } else {
+        result.lineClasses.push(LineClass.Blank);
+      }
+    }
+    return result;
   }
 }
