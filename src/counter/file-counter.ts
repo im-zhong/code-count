@@ -4,17 +4,18 @@
 import * as fs from "fs/promises";
 
 import { newAnalyzer } from "../analyzer/factory";
+import { SupportedLanguage } from "../common/supported-languages";
 import { FileResult } from "../common/types";
 
 export class FileCounter {
-  private language: string;
+  private language: SupportedLanguage;
   private absolutePath: string;
 
   constructor({
     language,
     absolutePath,
   }: {
-    language: string;
+    language: SupportedLanguage;
     absolutePath: string;
   }) {
     this.language = language;
@@ -22,21 +23,11 @@ export class FileCounter {
   }
 
   async countFile(): Promise<FileResult | undefined> {
-    // first read the file
-    const content = await fs.readFile(this.absolutePath, { encoding: "utf8" });
-    // then make analyzer
-    const analyzer = newAnalyzer({
-      text: content,
-      languageId: this.language,
-    });
-    if (analyzer === null) {
-      return undefined;
-    }
-    // count the lines
-    let result = analyzer.analyze();
-    if (result === null) {
-      return undefined;
-    }
-    return result;
+    const text = await fs.readFile(this.absolutePath, { encoding: "utf8" });
+
+    return newAnalyzer({
+      text,
+      language: this.language,
+    })?.analyze();
   }
 }

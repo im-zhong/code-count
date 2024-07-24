@@ -35,7 +35,7 @@ export abstract class Analyzer {
     this.stringStream = new StringStream(text);
   }
 
-  analyze(): FileResult | null {
+  analyze(): FileResult | undefined {
     try {
       this.init();
 
@@ -70,7 +70,7 @@ export abstract class Analyzer {
 
       return this.lineClassestoResult({ lineClasses: this.lineClasses });
     } catch (e) {
-      return null;
+      return undefined;
     }
   }
 
@@ -80,7 +80,7 @@ export abstract class Analyzer {
     lineClasses: BitVector[];
   }): FileResult {
     const result: FileResult = {
-      all: lineClasses.length,
+      lines: lineClasses.length,
       codes: 0,
       comments: 0,
       lineClasses: [],

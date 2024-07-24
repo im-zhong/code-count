@@ -1,8 +1,7 @@
 // 2024/7/22
 // zhangzhong
 
-// 2024/7/8
-// zhangzhong
+import { SupportedLanguage } from "./supported-languages";
 
 export enum LineClass {
   Blank,
@@ -13,55 +12,30 @@ export enum LineClass {
   Comment,
 }
 
-// 2024/7/8
-// zhangzhong
-
-// workspace statistics only need the simple result
-
-// export interface Result {
-//   all: number;
-//   codes: number;
-//   comments: number;
-// }
+export interface FileKey {
+  workspacePath: string;
+  language: SupportedLanguage;
+  absolutePath: string;
+}
 
 export interface FileResult {
-  // file: string | undefined;
-  // language: string;
-  all: number;
+  lines: number;
   codes: number;
   comments: number;
   lineClasses: LineClass[];
 }
 
-// export interface WorkspaceResult {
-//   workspace: string;
-//   language: string;
-//   results: DetailedResult[];
-// }
+export type FolderResult = {
+  [absolutePath: string]: FileResult;
+};
 
-// analyzer return detailed result
-// export interface DetailedResult {
-//   relativePath: string;
-//   language: string;
-//   lines: number;
-//   codes: number;
-//   comments: number;
-//   lineClasses: LineClass[];
-// }
-
-export interface Statistics {
-  [key: string]: FileResult;
-}
-
-export interface FolderResult {
-  [relativePath: string]: FileResult;
-}
-
-export interface WorkspaceStatistics {
-  // 我发现他这里没法指定名字
-  // 我没法指定一个映射类型
-  // 他的key实际上是有一个名字的
-  // 这样就很好了，最好value也有一个名字
-  // {keyName: keyType -> valueName: valueType}
+// The [key in SupportedLanguage]?: FolderResult; syntax is an index signature that indicates
+// every key of the WorkspaceResult object must be a member of the SupportedLanguage enum,
+// and its value must be of type FolderResult
+// but this method does not work either, cause type script think a value of a enum key maybe undefined
+//
+// because the underlying type of enum is string, so we use the string as the key
+export type WorkspaceResult = {
+  // [key in SupportedLanguage]?: FolderResult;
   [language: string]: FolderResult;
-}
+};

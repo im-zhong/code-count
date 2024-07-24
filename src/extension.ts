@@ -2,6 +2,8 @@
  * Copyright (C) Microsoft Corporation. All rights reserved.
  *--------------------------------------------------------*/
 
+// keyword: lazy
+
 // TODO: 其实展示的逻辑是一样的
 // 不管是什么动作，只要我们因为某个事件触发了handler
 // 在handler的最后，只要能够拿到active text editor
@@ -73,7 +75,7 @@
 
 // check if we already have the result
 // const result = workspaceStatistics.getFileResultOnlyLookTable({
-//   workspaceName: workspaceFolder.name,
+//   workspacePath: workspaceFolder.name,
 //   path: editor.document.uri.fsPath,
 //   language,
 // });
@@ -114,13 +116,13 @@ import path from "path";
 import * as vscode from "vscode";
 
 import {
-  toSupportedLanguage,
+  getSupportedLanguageFromId,
   getSupportedLanguageFromPath,
-} from "./common/support-languages";
+  SupportedLanguage,
+} from "./common/supported-languages";
 import { LineClass, FileResult } from "./common/types";
 import { WorkspaceCounter } from "./counter/workspace-counter";
 import { filterManager } from "./filter/filter-manager";
-import { getGitIgnoreFilter } from "./filter/git-ignore-filter";
 
 let statusBarItem: vscode.StatusBarItem;
 let workspaceCounter = new WorkspaceCounter();
@@ -218,26 +220,18 @@ const needHandle = async (
 ): Promise<
   | {
       workspaceFolder: vscode.WorkspaceFolder;
-      language: string;
+      language: SupportedLanguage;
     }
   | undefined
 > => {
-  // we just call the api
   const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
   if (!workspaceFolder) {
     return undefined;
   }
-  // and we need to get the language of the deleted file
-  // actually uri has the suffix
-  // we could use the suffix to get the language
 
-  // path分为两种
-  // 一种是absolutePath, 一种是relativePath
-  // 显然用全称可读性更高
-
-  // 应该先判断是不是被ignore了
-  // 如果被ignore 根本不需要处理
-  const filter = await getGitIgnoreFilter({ workspace: workspaceFolder });
+  const filter = await filterManager.getFilter({
+    workspacePath: workspaceFolder.uri.fsPath,
+  });
   // 卧槽！不能用path作为变量名，因为有一个模块的名字叫做path！
   if (filter.ignores(path.relative(workspaceFolder.uri.fsPath, uri.fsPath))) {
     return undefined;
@@ -259,7 +253,7 @@ const deleteFile = async (uri: vscode.Uri) => {
   const { workspaceFolder, language } = r;
 
   workspaceCounter.deleteFile({
-    workspaceName: workspaceFolder.name,
+    workspacePath: workspaceFolder.name,
     language: language,
     absolutePath: uri.fsPath,
   });
@@ -273,8 +267,8 @@ const lookFile = async (uri: vscode.Uri) => {
 
   // 无论如何，我们如果触发了全局统计
   // 我们显然是不需要再次执行当前文件的统计的
-  await workspaceCounter.triggerStatistic({
-    workspaceFolder,
+  await workspaceCounter.countWorkspace({
+    workspacePath: workspaceFolder.uri.fsPath,
     language,
   });
 
@@ -283,14 +277,14 @@ const lookFile = async (uri: vscode.Uri) => {
   // 直接返回就行
   // 如果没有统计过
   // 那么就统计一下
-  const fileResult = workspaceCounter.getFileResultOnlyLookTable({
-    workspaceName: workspaceFolder.name,
+  const fileResult = workspaceCounter.getFileResult({
+    workspacePath: workspaceFolder.name,
     language,
     absolutePath: uri.fsPath,
   });
   if (!fileResult) {
     await workspaceCounter.updateFile({
-      workspaceName: workspaceFolder.name,
+      workspacePath: workspaceFolder.name,
       language,
       absolutePath: uri.fsPath,
     });
@@ -305,7 +299,7 @@ const saveFile = async (uri: vscode.Uri) => {
     if (!workspaceFolder) {
       return;
     }
-    saveGitIgnore({ workspaceName: workspaceFolder.name });
+    saveGitIgnore({ workspacePath: workspaceFolder.name });
     return;
   }
 
@@ -316,8 +310,8 @@ const saveFile = async (uri: vscode.Uri) => {
 
   // 无论如何，我们如果触发了全局统计
   // 我们显然是不需要再次执行当前文件的统计的
-  const isTriggered = await workspaceCounter.triggerStatistic({
-    workspaceFolder,
+  const isTriggered = await workspaceCounter.countWorkspace({
+    workspacePath: workspaceFolder.uri.fsPath,
     language,
   });
 
@@ -325,7 +319,7 @@ const saveFile = async (uri: vscode.Uri) => {
   if (!isTriggered) {
     // 而且对于文件的更新操作，让counter来代劳就ok啦
     await workspaceCounter.updateFile({
-      workspaceName: workspaceFolder.name,
+      workspacePath: workspaceFolder.name,
       language,
       absolutePath: uri.fsPath,
     });
@@ -345,10 +339,10 @@ const saveFile = async (uri: vscode.Uri) => {
 // 这里不应该给一个uri
 // 应该直接给一个worksapceName
 // 就告诉我们保存了哪个workspace下面的.gitignore就ok了
-const saveGitIgnore = async ({ workspaceName }: { workspaceName: string }) => {
-  filterManager.deleteFilter({ workspaceName });
+const saveGitIgnore = async ({ workspacePath }: { workspacePath: string }) => {
+  filterManager.deleteFilter({ workspacePath });
   workspaceCounter.deleteWorkspace({
-    workspaceName,
+    workspacePath,
   });
 };
 
@@ -393,7 +387,7 @@ async function updateStatusBarItem(): Promise<void> {
   // result.all = editor.document.lineCount;
 
   // workspaceStatistics.updateFile({
-  //   workspaceName: vscode.workspace.name || "unknown",
+  //   workspacePath: vscode.workspace.name || "unknown",
   //   relativeFilePath: relativePath,
   //   analyzeResult: result,
   // });
@@ -421,11 +415,19 @@ async function updateStatusBarItem(): Promise<void> {
   //   return;
   // }
 
+  const language = getSupportedLanguageFromId({
+    languageId: editor.document.languageId,
+  });
+  if (!language) {
+    statusBarItem.hide();
+    return;
+  }
+
   // 直接拿结果就ok
   // 如果拿不到结果，我们就不展示了，
-  const fileResult = workspaceCounter.getFileResultOnlyLookTable({
-    workspaceName: workspace.name,
-    language: toSupportedLanguage({ languageId: editor.document.languageId }),
+  const fileResult = workspaceCounter.getFileResult({
+    workspacePath: workspace.uri.fsPath,
+    language,
     absolutePath: editor.document.uri.fsPath,
   });
   if (!fileResult) {
@@ -436,8 +438,8 @@ async function updateStatusBarItem(): Promise<void> {
   // get total result
   const { totalCodes, totalComments } =
     workspaceCounter.getTotalCodesAndComments({
-      workspaceName: workspace.name,
-      language: toSupportedLanguage({ languageId: editor.document.languageId }),
+      workspacePath: workspace.uri.fsPath,
+      language,
     });
 
   // const codePercentage =

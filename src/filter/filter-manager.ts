@@ -1,29 +1,27 @@
 // 2024/7/24
 // zhangzhong
 
-import * as vscode from "vscode";
 import { GitIgnoreFilter, newGitIgnoreFilter } from "./git-ignore-filter";
 
-// 我们需要一个filter的manager
-// 这个manager会帮助我们维护一个filter
 class FilterManager {
-  private filters: { [key: string]: GitIgnoreFilter } = {};
+  private filters: { [workspacePath: string]: GitIgnoreFilter } = {};
+
   async getFilter({
-    workspace,
+    workspacePath,
   }: {
-    workspace: vscode.WorkspaceFolder;
+    workspacePath: string;
   }): Promise<GitIgnoreFilter> {
-    if (!(workspace.name in this.filters)) {
-      this.filters[workspace.name] = await newGitIgnoreFilter({
-        folder: workspace,
+    if (!(workspacePath in this.filters)) {
+      this.filters[workspacePath] = await newGitIgnoreFilter({
+        workspacePath,
       });
     }
-    return this.filters[workspace.name];
+    return this.filters[workspacePath];
   }
 
-  async deleteFilter({ workspaceName }: { workspaceName: string }) {
-    if (workspaceName in this.filters) {
-      delete this.filters[workspaceName];
+  async deleteFilter({ workspacePath }: { workspacePath: string }) {
+    if (workspacePath in this.filters) {
+      delete this.filters[workspacePath];
     }
   }
 }
