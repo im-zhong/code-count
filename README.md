@@ -21,6 +21,12 @@ Inspired by linux cli tool **wc**, instead of counting words, this tool will **l
 
 ![example](assets/example2.png)
 
+### 0.3.0
+
+* Add a language icon on the status bar item.
+* Add a hover message on the status bar item.
+* Adjust the description in the status bar item.
+
 ### 0.2.0
 
 * Add support for C/C++
@@ -43,8 +49,6 @@ Initial release of code count tool, support
 
 ## TODO
 
-* [x] add language icon on the status bar
-* [ ] add a hover message on the status bar item
 * [ ] add support for golang
 * [ ] add support for rust
 
