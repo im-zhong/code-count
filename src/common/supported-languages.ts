@@ -86,3 +86,19 @@ export function getSupportedLanguageFromPath({
   }
   return undefined;
 }
+
+// https://code.visualstudio.com/api/references/contribution-points#contributes.icons
+export function getIconFromSupportedLanguage({
+  language,
+}: {
+  language: SupportedLanguage;
+}): string {
+  switch (language) {
+    case SupportedLanguage.PYTHON:
+      return "python-icon";
+    case SupportedLanguage.CPP:
+      return "cuttlefish-icon";
+    case SupportedLanguage.TYPE_SCRIPT:
+      return "javascript-icon";
+  }
+}

@@ -23,7 +23,52 @@
     "onStartupFinished"
   ],
   "main": "./dist/extension.js",
-  "contributes": {},
+  "contributes": {
+    "icons": {
+      "python-icon": {
+        "description": "python icon",
+        "default": {
+          "fontPath": "./assets/fa-brands-400.woff2",
+          "fontCharacter": ""
+        }
+      },
+      "cuttlefish-icon": {
+        "description": "cuttlefish icon for C/C++/C#",
+        "default": {
+          "fontPath": "./assets/fa-brands-400.woff2",
+          "fontCharacter": ""
+        }
+      },
+      "java-icon": {
+        "description": "java icon",
+        "default": {
+          "fontPath": "./assets/fa-brands-400.woff2",
+          "fontCharacter": ""
+        }
+      },
+      "javascript-icon": {
+        "description": "javascript icon",
+        "default": {
+          "fontPath": "./assets/fa-brands-400.woff2",
+          "fontCharacter": ""
+        }
+      },
+      "golang-icon": {
+        "description": "golang icon",
+        "default": {
+          "fontPath": "./assets/fa-brands-400.woff2",
+          "fontCharacter": ""
+        }
+      },
+      "rust-icon": {
+        "description": "rust icon",
+        "default": {
+          "fontPath": "./assets/fa-brands-400.woff2",
+          "fontCharacter": ""
+        }
+      }
+    }
+  },
   "scripts": {
     "vscode:prepublish": "npm run package",
     "compile": "npm run check-types && npm run lint && node esbuild.js",

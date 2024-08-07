@@ -10,6 +10,7 @@ import path from "path";
 import * as vscode from "vscode";
 
 import {
+  getIconFromSupportedLanguage,
   getSupportedLanguageFromId,
   getSupportedLanguageFromPath,
   SupportedLanguage,
@@ -267,7 +268,7 @@ async function updateStatusBarItem(): Promise<void> {
       language,
     });
 
-  statusBarItem.text = `Codes: ${fileResult.codes}/${totalCodes}, Comments: ${fileResult.comments}/${totalComments}`;
+  statusBarItem.text = `$(${getIconFromSupportedLanguage({ language })}) Codes: ${fileResult.codes}/${totalCodes}, Annos: ${fileResult.comments}/${totalComments}`;
   statusBarItem.show();
 
   clearBackground({ editor });

@@ -43,6 +43,8 @@ Initial release of code count tool, support
 
 ## TODO
 
+* [x] add language icon on the status bar
+* [ ] add a hover message on the status bar item
 * [ ] add support for golang
 * [ ] add support for rust
 
