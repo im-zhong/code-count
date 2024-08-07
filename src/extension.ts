@@ -54,6 +54,12 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
     100,
   );
   statusBarItem.command = commandId;
+  // When the user hovers over the status bar item, this message will be displayed.
+  // The tooltip for a status bar item in a Visual Studio Code extension can be a Markdown string.
+  // This allows you to include rich text formatting, links, and other Markdown features in the tooltip.
+  statusBarItem.tooltip = new vscode.MarkdownString(
+    "# Count Codes And Comments\n- The beginning icon is standing for the language of the current file.\n- In Codes: x/y, x means the lines of codes in the current file, y means the total lines of codes that belongs to the same langugae in the current workspcae.\n- Annos: x/y means the lines of comments in the current file and the current workspace.\n # Toggle Background Color\n- Click to toggle the background color in the current file to check codes and comments line by line.",
+  );
   subscriptions.push(statusBarItem);
 
   // This event is fired when the active text editor changes
