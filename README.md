@@ -21,6 +21,10 @@ Inspired by linux cli tool **wc**, instead of counting words, this tool will **l
 
 ![example](assets/example2.png)
 
+### 0.4.0
+
+* Add support for python jupyter notebook.
+
 ### 0.3.0
 
 * Add a language icon on the status bar item.
