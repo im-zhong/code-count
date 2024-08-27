@@ -21,7 +21,7 @@ const supportedLanguageIds: Record<SupportedLanguage, string[]> = {
 
 // record construct a type with a set of properties K in enumeration one by one
 const supportedLanguageSuffixes: Record<SupportedLanguage, string[]> = {
-  [SupportedLanguage.PYTHON]: [".py", ".py.in"],
+  [SupportedLanguage.PYTHON]: [".py", ".py.in", ".ipynb"],
   [SupportedLanguage.TYPE_SCRIPT]: [
     // TypeScript
     ".ts",

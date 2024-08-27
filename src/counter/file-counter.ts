@@ -28,6 +28,7 @@ export class FileCounter {
     return newAnalyzer({
       text,
       language: this.language,
+      absolutePath: this.absolutePath,
     })?.analyze();
   }
 }

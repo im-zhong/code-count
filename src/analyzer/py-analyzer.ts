@@ -5,8 +5,29 @@ import { LineClass } from "../common/types";
 
 import { Analyzer } from "./base-analyzer";
 
+function extractCodesFromIpynb({ text }: { text: string }): string {
+  const ipynb = JSON.parse(text);
+
+  const codes: string[] = [];
+  for (const cell of ipynb.cells) {
+    if (cell.cell_type === "code") {
+      const source: string[] = cell.source;
+      if (cell.source.length === 0) {
+        continue;
+      }
+      source[source.length - 1] += "\n";
+      codes.push(...source);
+    }
+  }
+
+  return codes.join("");
+}
+
 export class PyAnalyzer extends Analyzer {
-  constructor({ text }: { text: string }) {
+  constructor({ text, absolutePath }: { text: string; absolutePath: string }) {
+    if (absolutePath.endsWith(".ipynb")) {
+      text = extractCodesFromIpynb({ text });
+    }
     super({
       lineCommentHead: "#",
       blockCommentHead: "",

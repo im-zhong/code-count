@@ -71,10 +71,18 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
         if (textEditor) {
           await lookFile(textEditor.document.uri);
         }
-
         await updateStatusBarItem();
       },
     ),
+  );
+  // Notebok Editor and Text Editor use different event to trigger
+  vscode.window.onDidChangeActiveNotebookEditor(
+    async (notebookEditor: vscode.NotebookEditor | undefined) => {
+      if (notebookEditor) {
+        await lookFile(notebookEditor.notebook.uri);
+      }
+      await updateStatusBarItem();
+    },
   );
 
   // The vscode.workspace.onDidSaveTextDocument event in Visual Studio Code is triggered whenever a text document (file) is saved.
@@ -86,6 +94,14 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
   subscriptions.push(
     vscode.workspace.onDidSaveTextDocument(
       async (document: vscode.TextDocument) => {
+        await saveFile(document.uri);
+        await updateStatusBarItem();
+      },
+    ),
+  );
+  subscriptions.push(
+    vscode.workspace.onDidSaveNotebookDocument(
+      async (document: vscode.NotebookDocument) => {
         await saveFile(document.uri);
         await updateStatusBarItem();
       },
@@ -148,7 +164,7 @@ const lookFile = async (uri: vscode.Uri) => {
 const saveFile = async (uri: vscode.Uri) => {
   // if uri is .gitignore file, we should update the filter
   if (path.basename(uri.fsPath) === ".gitignore") {
-    const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+    const workspaceFolder = getWorkspaceFolderFromUri({ uri });
     if (!workspaceFolder) {
       return;
     }
@@ -198,6 +214,30 @@ const deleteFile = async (uri: vscode.Uri) => {
   });
 };
 
+const getWorkspaceFolderFromUri = ({
+  uri,
+}: {
+  uri: vscode.Uri;
+}): vscode.WorkspaceFolder | undefined => {
+  // Jupyter Notebook URIs are handled differently compared to regular file URIs in Visual Studio Code
+  let workspaceFolder: vscode.WorkspaceFolder | undefined = undefined;
+  // vscode.workspace.notebookDocuments: All notebook documents currently known to the editor.
+  const notebookDocument = vscode.workspace.notebookDocuments.find(
+    (doc) => doc.uri.fsPath === uri.fsPath,
+  );
+  if (notebookDocument) {
+    // vscode.workspace.getWorkspaceFolder(editor.document.uri)
+    // Purpose: This function is used to retrieve the workspace folder that contains a given file. In a multi-root workspace, this is particularly useful because it allows you to determine which of the multiple folders a file belongs to.
+    // Usage: It is used when you need to perform operations relative to the folder containing a file, such as resolving relative paths or applying folder-specific configurations.
+    // Parameters: It takes a Uri object representing the file's location.
+    // Return Value: It returns a WorkspaceFolder object that contains information about the workspace folder, such as its uri, name, and index. If the file is not contained in any workspace folder, it returns undefined.
+    workspaceFolder = vscode.workspace.getWorkspaceFolder(notebookDocument.uri);
+  } else {
+    workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+  }
+  return workspaceFolder;
+};
+
 const needHandle = async (
   uri: vscode.Uri,
 ): Promise<
@@ -211,13 +251,8 @@ const needHandle = async (
   // Purpose: This property provides the name of the workspace. In the context of VS Code, a "workspace" can refer to a single folder opened in VS Code or a multi-root workspace (which is a collection of folders that are opened in a single VS Code instance).
   // Usage: It is useful when you need to display the name of the current workspace or when you need to differentiate between workspaces in a multi-workspace environment.
   // Return Value: It returns a string representing the name of the workspace. For a single folder, it's the name of that folder. For a multi-root workspace, it's the name of the workspace as defined in the .code-workspace file. If there is no open workspace, it returns undefined.
-  //
-  // vscode.workspace.getWorkspaceFolder(editor.document.uri)
-  // Purpose: This function is used to retrieve the workspace folder that contains a given file. In a multi-root workspace, this is particularly useful because it allows you to determine which of the multiple folders a file belongs to.
-  // Usage: It is used when you need to perform operations relative to the folder containing a file, such as resolving relative paths or applying folder-specific configurations.
-  // Parameters: It takes a Uri object representing the file's location.
-  // Return Value: It returns a WorkspaceFolder object that contains information about the workspace folder, such as its uri, name, and index. If the file is not contained in any workspace folder, it returns undefined.
-  const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+
+  const workspaceFolder = getWorkspaceFolderFromUri({ uri });
   if (!workspaceFolder) {
     return undefined;
   }
@@ -244,8 +279,10 @@ async function updateStatusBarItem(): Promise<void> {
     return;
   }
 
-  const workspace = vscode.workspace.getWorkspaceFolder(editor.document.uri);
-  if (!workspace) {
+  const workspaceFolder = getWorkspaceFolderFromUri({
+    uri: editor.document.uri,
+  });
+  if (!workspaceFolder) {
     statusBarItem.hide();
     return;
   }
@@ -259,7 +296,7 @@ async function updateStatusBarItem(): Promise<void> {
   }
 
   const fileResult = workspaceCounter.getFileResult({
-    workspacePath: workspace.uri.fsPath,
+    workspacePath: workspaceFolder.uri.fsPath,
     language,
     absolutePath: editor.document.uri.fsPath,
   });
@@ -270,7 +307,7 @@ async function updateStatusBarItem(): Promise<void> {
 
   const { totalCodes, totalComments } =
     workspaceCounter.getTotalCodesAndComments({
-      workspacePath: workspace.uri.fsPath,
+      workspacePath: workspaceFolder.uri.fsPath,
       language,
     });
 

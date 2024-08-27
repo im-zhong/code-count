@@ -11,13 +11,15 @@ import { TsAnalyzer } from "./ts-analyzer";
 export function newAnalyzer({
   text,
   language,
+  absolutePath,
 }: {
   text: string;
   language: SupportedLanguage;
+  absolutePath: string;
 }): Analyzer | undefined {
   switch (language) {
     case SupportedLanguage.PYTHON:
-      return new PyAnalyzer({ text });
+      return new PyAnalyzer({ text, absolutePath });
     case SupportedLanguage.TYPE_SCRIPT:
       return new TsAnalyzer({ text });
     case SupportedLanguage.CPP:
