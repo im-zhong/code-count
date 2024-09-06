@@ -55,6 +55,7 @@ Initial release of code count tool, support
 
 * [ ] add support for golang
 * [ ] add support for rust
+* [ ] fix a bug: in file counter, we may not open a file, just check and ignore it
 
 ---
 
