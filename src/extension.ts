@@ -11,7 +11,6 @@ import * as vscode from "vscode";
 
 import {
   getIconFromSupportedLanguage,
-  // getSupportedLanguageFromId,
   getSupportedLanguageFromPath,
   SupportedLanguage,
 } from "./common/supported-languages";
@@ -19,10 +18,7 @@ import { LineClass, FileResult } from "./common/types";
 import { WorkspaceCounter } from "./counter/workspace-counter";
 import { filterManager } from "./filter/filter-manager";
 import { registerLoadingStatusBarItem } from "./lib/loading-status-bar-item";
-import {
-  activateOutputChannel,
-  disposeOutputChannel,
-} from "./lib/output-channel";
+import { activateOutputChannel } from "./lib/output-channel";
 
 let statusBarItem: vscode.StatusBarItem;
 let workspaceCounter = new WorkspaceCounter();
@@ -46,6 +42,9 @@ let backgroundToggle = false;
 export async function activate({ subscriptions }: vscode.ExtensionContext) {
   // register a command that is invoked when the status bar item is selected
   const commandId = "code-count.showCodeCount";
+  // When you add disposables to the subscriptions array,
+  // Visual Studio Code will automatically dispose of them when the extension is deactivated,
+  // ensuring that resources are properly released and preventing memory leaks.
   subscriptions.push(
     vscode.commands.registerCommand(commandId, () => {
       backgroundToggle = !backgroundToggle;
@@ -53,8 +52,8 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
     }),
   );
 
-  // Create the Output Channel
-  activateOutputChannel("Code Count");
+  // Create the Output Channel and register it with the subscriptions array
+  subscriptions.push(activateOutputChannel("Code Count"));
 
   // create a new status bar item that will show at the right end of the status bar
   statusBarItem = vscode.window.createStatusBarItem(
@@ -68,8 +67,6 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
   statusBarItem.tooltip = new vscode.MarkdownString(
     "# Count Codes And Comments\n- The beginning icon is standing for the language of the current file.\n- In Codes: x/y, x means the lines of codes in the current file, y means the total lines of codes that belongs to the same langugae in the current workspcae.\n- Annos: x/y means the lines of comments in the current file and the current workspace.\n # Toggle Background Color\n- Click to toggle the background color in the current file to check codes and comments line by line.",
   );
-  // TODO: all the resource should add to subscriptions
-  // When you add disposables to the subscriptions array, Visual Studio Code will automatically dispose of them when the extension is deactivated, ensuring that resources are properly released and preventing memory leaks.
   subscriptions.push(statusBarItem);
 
   // add loading status bar item
@@ -145,10 +142,6 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
       });
     }),
   );
-}
-
-export function deactivate() {
-  disposeOutputChannel();
 }
 
 const lookFile = async (uri: vscode.Uri) => {
@@ -304,15 +297,6 @@ async function updateStatusBarItem(): Promise<void> {
     return;
   }
 
-  // if we do not install the proper language extension
-  // we could not get the right languageId
-  // so we should not depend on it
-  // we should just check the file extension and get its language,
-  // so we should write a new method to replace this method
-  // getSupportedLanguageFromUri
-  // const language = getSupportedLanguageFromId({
-  //   languageId: editor.document.languageId,
-  // });
   const language = getSupportedLanguageFromPath({
     path: editor.document.uri.fsPath,
   });

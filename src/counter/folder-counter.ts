@@ -32,28 +32,18 @@ export class FolderCounter {
     });
 
     // https://stackoverflow.com/questions/55633453/rotating-octicon-in-statusbar-of-vs-code
-    // there is a loading icon in vscode icons
-    // and a spin operator can spin it, we are loading!
-    // now the problem is that we need show the loading status bar
-    // the eaist way to do this is create a new status bar item
-    // and only show it when we count the workspace
-    // and we show the other status bar item when we finish counting
-    // this status bar item is better to write as a single module
-
-    // almost right
-    // Code Counting: 1234 rest
     const loadingStatusBarItem = getLoadingStatusBarItem();
+    loadingStatusBarItem.text = `$(loading~spin) code-count: collecting ${this.language} files`;
     loadingStatusBarItem.show();
 
-    // collecting files first
-    loadingStatusBarItem.text = `$(loading~spin) code-count: collecting files of ${this.language}`;
+    // collecting files that need to be counted
     const filteredFiles = await filter.getFilteredFiles({
       workspacePath: this.workspacePath,
       language: this.language,
     });
 
     let totalFilesCount = filteredFiles.length;
-    loadingStatusBarItem.text = `$(loading~spin) code-count: ${totalFilesCount} file(s) remains`;
+    loadingStatusBarItem.text = `$(loading~spin) code-count: ${totalFilesCount} ${this.language} file(s) remains`;
 
     for (const absolutePath of filteredFiles) {
       const fileCounter = new FileCounter({
@@ -63,15 +53,12 @@ export class FolderCounter {
 
       const fileResult = await fileCounter.countFile();
       if (fileResult !== undefined) {
-        // now this contnue is not correct
-        // continue;
         this.folderResult[absolutePath] = fileResult;
       }
 
       // update too frequently is not good
-      // how to update the text more smoothly and interestingly?
       if (totalFilesCount % 10 === 0) {
-        loadingStatusBarItem.text = `$(loading~spin) code-count: ${totalFilesCount} file(s) remains`;
+        loadingStatusBarItem.text = `$(loading~spin) code-count: ${totalFilesCount} ${this.language} file(s) remains`;
       }
       totalFilesCount -= 1;
     }

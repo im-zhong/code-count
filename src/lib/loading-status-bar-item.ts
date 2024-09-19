@@ -11,8 +11,6 @@ export function registerLoadingStatusBarItem(): vscode.StatusBarItem {
     vscode.StatusBarAlignment.Left,
     10,
   );
-  // loadingStatusBarItem.text = "$(loading~spin) Code Counting...";
-  // loadingStatusBarItem.tooltip = "Loading...";
   return loadingStatusBarItem;
 }
 

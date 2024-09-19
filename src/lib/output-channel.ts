@@ -6,17 +6,11 @@ import * as vscode from "vscode";
 
 let outputChannel: vscode.OutputChannel;
 
-export const activateOutputChannel = (name: string): void => {
+export function activateOutputChannel(name: string): vscode.OutputChannel {
   // https://code.visualstudio.com/api/references/vscode-api#OutputChannel
   outputChannel = vscode.window.createOutputChannel(name);
-};
-
-export const disposeOutputChannel = (): void => {
-  // Clean up resources if necessary
-  if (outputChannel) {
-    outputChannel.dispose();
-  }
-};
+  return outputChannel;
+}
 
 /**
  * Prints the given content on the output channel.

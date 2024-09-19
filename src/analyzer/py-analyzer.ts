@@ -6,18 +6,15 @@ import { LineClass } from "../common/types";
 import { Analyzer } from "./base-analyzer";
 
 function extractCodesFromIpynb({ text }: { text: string }): string {
-  // first check if if file is empty
+  // first check if current file is empty
   // cause empty ipynb is a valid ipynb, but its content is an empty file
   text = text.trim();
   if (text === "") {
     return "";
   }
 
-  const ipynb = JSON.parse(text);
-  // we may be parse error
-  // in that case, we just raise an error
-
   const codes: string[] = [];
+  const ipynb = JSON.parse(text);
   for (const cell of ipynb.cells) {
     if (cell.cell_type === "code") {
       const source: string[] = cell.source;
