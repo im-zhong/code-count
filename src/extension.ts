@@ -18,6 +18,10 @@ import {
 import { LineClass, FileResult } from "./common/types";
 import { WorkspaceCounter } from "./counter/workspace-counter";
 import { filterManager } from "./filter/filter-manager";
+import {
+  activateOutputChannel,
+  disposeOutputChannel,
+} from "./lib/output-channel";
 
 let statusBarItem: vscode.StatusBarItem;
 let workspaceCounter = new WorkspaceCounter();
@@ -47,6 +51,9 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
       updateStatusBarItem();
     }),
   );
+
+  // Create the Output Channel
+  activateOutputChannel("Code Count");
 
   // create a new status bar item that will show at the right end of the status bar
   statusBarItem = vscode.window.createStatusBarItem(
@@ -132,6 +139,10 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
       });
     }),
   );
+}
+
+export function deactivate() {
+  disposeOutputChannel();
 }
 
 const lookFile = async (uri: vscode.Uri) => {

@@ -54,11 +54,12 @@ Initial release of code count tool, support
 ## TODO
 
 * [ ] fix: when open a huge project, there should have a progress, like clangd
-* [ ] fix: when we faliure on a certain file, or when we get stuck on certain file, we should print some log to help debug
+* [x] fix: when we faliure on a certain file, or when we get stuck on certain file, we should print some log to help debug
 * [ ] add a new command to generate a report of the whole project
 * [ ] add support for golang
 * [ ] add support for rust
 * [ ] fix a bug: in file counter, we may not open a file, just check and ignore it
+* [ ] fix: failed to parse empty ipynb
 
 ---
 

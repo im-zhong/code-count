@@ -7,6 +7,8 @@ import { Analyzer } from "./base-analyzer";
 
 function extractCodesFromIpynb({ text }: { text: string }): string {
   const ipynb = JSON.parse(text);
+  // we may be parse error
+  // in that case, we just raise an error
 
   const codes: string[] = [];
   for (const cell of ipynb.cells) {
