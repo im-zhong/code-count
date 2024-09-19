@@ -21,6 +21,14 @@ Inspired by linux cli tool **wc**, instead of counting words, this tool will **l
 
 ![example](assets/example2.png)
 
+### 0.5.0
+
+1. Add support of GDScript
+2. Add progress status bar item when counting new workspace folder
+3. Fix a bug that could stuck the extension when counting a file with a correct suffix but which is a folder, such as a folder names: example.cpp
+4. Fix a bug that failed to counting an empty Jupyter notebook
+5. Add running logs to vscode output panel for better debugging
+
 ### 0.4.0
 
 * Add support for python jupyter notebook.
@@ -53,14 +61,10 @@ Initial release of code count tool, support
 
 ## TODO
 
-* [x] fix: when open a huge project, there should have a progress, like clangd
-* [x] fix: when we faliure on a certain file, or when we get stuck on certain file, we should print some log to help debug
 * [ ] add a new command to generate a report of the whole project
 * [ ] add support for golang
 * [ ] add support for rust
-* [x] add support for gdscript
-* [x] fix a bug: in file counter, we may not open a file, just check and ignore it
-* [x] fix: failed to parse empty ipynb, empty ipynb is a empty file, which is a special case, we could handle it specifically
+* [ ] maybe change the example images in readme
 
 ---
 
