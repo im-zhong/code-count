@@ -18,6 +18,7 @@ import {
 import { LineClass, FileResult } from "./common/types";
 import { WorkspaceCounter } from "./counter/workspace-counter";
 import { filterManager } from "./filter/filter-manager";
+import { registerLoadingStatusBarItem } from "./lib/loading-status-bar-item";
 import {
   activateOutputChannel,
   disposeOutputChannel,
@@ -67,7 +68,12 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
   statusBarItem.tooltip = new vscode.MarkdownString(
     "# Count Codes And Comments\n- The beginning icon is standing for the language of the current file.\n- In Codes: x/y, x means the lines of codes in the current file, y means the total lines of codes that belongs to the same langugae in the current workspcae.\n- Annos: x/y means the lines of comments in the current file and the current workspace.\n # Toggle Background Color\n- Click to toggle the background color in the current file to check codes and comments line by line.",
   );
+  // TODO: all the resource should add to subscriptions
+  // When you add disposables to the subscriptions array, Visual Studio Code will automatically dispose of them when the extension is deactivated, ensuring that resources are properly released and preventing memory leaks.
   subscriptions.push(statusBarItem);
+
+  // add loading status bar item
+  subscriptions.push(registerLoadingStatusBarItem());
 
   // This event is fired when the active text editor changes
   // This can happen when a new editor is opened, an existing editor is brought into focus,
