@@ -43,7 +43,7 @@ export class FolderCounter {
     });
 
     let totalFilesCount = filteredFiles.length;
-    loadingStatusBarItem.text = `$(loading~spin) code-count: ${totalFilesCount} ${this.language} file(s) remains`;
+    loadingStatusBarItem.text = `code-count: ${totalFilesCount} ${this.language} files remaining`;
 
     for (const absolutePath of filteredFiles) {
       const fileCounter = new FileCounter({
@@ -57,8 +57,9 @@ export class FolderCounter {
       }
 
       // update too frequently is not good
+      // the loading-spin do not suite for this frequently update manner
       if (totalFilesCount % 10 === 0) {
-        loadingStatusBarItem.text = `$(loading~spin) code-count: ${totalFilesCount} ${this.language} file(s) remains`;
+        loadingStatusBarItem.text = `code-count: ${totalFilesCount} ${this.language} files remaining`;
       }
       totalFilesCount -= 1;
     }

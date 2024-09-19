@@ -37,9 +37,7 @@ export class FileCounter {
       printToChannelOutput(`End counting: ${this.absolutePath}`);
       return result;
     } catch (error) {
-      printToChannelOutput(
-        `Failed counting: ${this.absolutePath}, error: ${error}`,
-      );
+      printToChannelOutput(`Failed counting: ${this.absolutePath}, ${error}`);
       return undefined;
     }
   }
