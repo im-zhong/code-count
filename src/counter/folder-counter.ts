@@ -4,6 +4,7 @@
 import { SupportedLanguage } from "../common/supported-languages";
 import { FolderResult } from "../common/types";
 import { filterManager } from "../filter/filter-manager";
+import { getLoadingStatusBarItem } from "../lib/loading-status-bar-item";
 
 import { FileCounter } from "./file-counter";
 
@@ -30,21 +31,40 @@ export class FolderCounter {
       workspacePath: this.workspacePath,
     });
 
-    for (const absolutePath of await filter.getFilteredFiles({
+    // https://stackoverflow.com/questions/55633453/rotating-octicon-in-statusbar-of-vs-code
+    const loadingStatusBarItem = getLoadingStatusBarItem();
+    loadingStatusBarItem.text = `$(loading~spin) code-count: collecting ${this.language} files`;
+    loadingStatusBarItem.show();
+
+    // collecting files that need to be counted
+    const filteredFiles = await filter.getFilteredFiles({
       workspacePath: this.workspacePath,
       language: this.language,
-    })) {
+    });
+
+    let totalFilesCount = filteredFiles.length;
+    loadingStatusBarItem.text = `code-count: ${totalFilesCount} ${this.language} files remaining`;
+
+    for (const absolutePath of filteredFiles) {
       const fileCounter = new FileCounter({
         language: this.language,
         absolutePath,
       });
 
       const fileResult = await fileCounter.countFile();
-      if (fileResult === undefined) {
-        continue;
+      if (fileResult !== undefined) {
+        this.folderResult[absolutePath] = fileResult;
       }
-      this.folderResult[absolutePath] = fileResult;
+
+      // update too frequently is not good
+      // the loading-spin do not suite for this frequently update manner
+      if (totalFilesCount % 10 === 0) {
+        loadingStatusBarItem.text = `code-count: ${totalFilesCount} ${this.language} files remaining`;
+      }
+      totalFilesCount -= 1;
     }
+
+    loadingStatusBarItem.hide();
     return this.folderResult;
   }
 }

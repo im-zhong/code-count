@@ -6,6 +6,7 @@ import * as fs from "fs/promises";
 import { newAnalyzer } from "../analyzer/factory";
 import { SupportedLanguage } from "../common/supported-languages";
 import { FileResult } from "../common/types";
+import { printToChannelOutput } from "../lib/output-channel";
 
 export class FileCounter {
   private language: SupportedLanguage;
@@ -23,12 +24,21 @@ export class FileCounter {
   }
 
   async countFile(): Promise<FileResult | undefined> {
-    const text = await fs.readFile(this.absolutePath, { encoding: "utf8" });
+    try {
+      printToChannelOutput(`Start counting: ${this.absolutePath}`);
 
-    return newAnalyzer({
-      text,
-      language: this.language,
-      absolutePath: this.absolutePath,
-    })?.analyze();
+      const text = await fs.readFile(this.absolutePath, { encoding: "utf8" });
+      const result = newAnalyzer({
+        text,
+        language: this.language,
+        absolutePath: this.absolutePath,
+      })?.analyze();
+
+      printToChannelOutput(`End counting: ${this.absolutePath}`);
+      return result;
+    } catch (error) {
+      printToChannelOutput(`Failed counting: ${this.absolutePath}, ${error}`);
+      return undefined;
+    }
   }
 }
