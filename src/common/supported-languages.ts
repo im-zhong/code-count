@@ -5,6 +5,7 @@ export enum SupportedLanguage {
   PYTHON = "python",
   TYPE_SCRIPT = "typescript",
   CPP = "cpp",
+  GDSCRIPT = "gdscript",
 }
 
 // https://code.visualstudio.com/docs/languages/identifiers
@@ -47,6 +48,7 @@ const supportedLanguageSuffixes: Record<SupportedLanguage, string[]> = {
     ".c++",
     ".h++",
   ],
+  [SupportedLanguage.GDSCRIPT]: [".gd"],
 };
 
 export function getLanguageSuffixes({
@@ -100,5 +102,7 @@ export function getIconFromSupportedLanguage({
       return "cuttlefish-icon";
     case SupportedLanguage.TYPE_SCRIPT:
       return "javascript-icon";
+    case SupportedLanguage.GDSCRIPT:
+      return "python-icon";
   }
 }
