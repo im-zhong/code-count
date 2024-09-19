@@ -8,16 +8,16 @@ export enum SupportedLanguage {
 }
 
 // https://code.visualstudio.com/docs/languages/identifiers
-const supportedLanguageIds: Record<SupportedLanguage, string[]> = {
-  [SupportedLanguage.PYTHON]: ["python"],
-  [SupportedLanguage.TYPE_SCRIPT]: [
-    "typescript",
-    "typescriptreact",
-    "javascript",
-    "javascriptreact",
-  ],
-  [SupportedLanguage.CPP]: ["cpp", "c"],
-};
+// const supportedLanguageIds: Record<SupportedLanguage, string[]> = {
+//   [SupportedLanguage.PYTHON]: ["python"],
+//   [SupportedLanguage.TYPE_SCRIPT]: [
+//     "typescript",
+//     "typescriptreact",
+//     "javascript",
+//     "javascriptreact",
+//   ],
+//   [SupportedLanguage.CPP]: ["cpp", "c"],
+// };
 
 // record construct a type with a set of properties K in enumeration one by one
 const supportedLanguageSuffixes: Record<SupportedLanguage, string[]> = {
@@ -57,18 +57,18 @@ export function getLanguageSuffixes({
   return supportedLanguageSuffixes[language];
 }
 
-export function getSupportedLanguageFromId({
-  languageId,
-}: {
-  languageId: string;
-}): SupportedLanguage | undefined {
-  for (const [language, languageIds] of Object.entries(supportedLanguageIds)) {
-    if (languageIds.includes(languageId)) {
-      return language as SupportedLanguage;
-    }
-  }
-  return undefined;
-}
+// export function getSupportedLanguageFromId({
+//   languageId,
+// }: {
+//   languageId: string;
+// }): SupportedLanguage | undefined {
+//   for (const [language, languageIds] of Object.entries(supportedLanguageIds)) {
+//     if (languageIds.includes(languageId)) {
+//       return language as SupportedLanguage;
+//     }
+//   }
+//   return undefined;
+// }
 
 export function getSupportedLanguageFromPath({
   path,

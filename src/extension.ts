@@ -11,7 +11,7 @@ import * as vscode from "vscode";
 
 import {
   getIconFromSupportedLanguage,
-  getSupportedLanguageFromId,
+  // getSupportedLanguageFromId,
   getSupportedLanguageFromPath,
   SupportedLanguage,
 } from "./common/supported-languages";
@@ -287,8 +287,17 @@ async function updateStatusBarItem(): Promise<void> {
     return;
   }
 
-  const language = getSupportedLanguageFromId({
-    languageId: editor.document.languageId,
+  // if we do not install the proper language extension
+  // we could not get the right languageId
+  // so we should not depend on it
+  // we should just check the file extension and get its language,
+  // so we should write a new method to replace this method
+  // getSupportedLanguageFromUri
+  // const language = getSupportedLanguageFromId({
+  //   languageId: editor.document.languageId,
+  // });
+  const language = getSupportedLanguageFromPath({
+    path: editor.document.uri.fsPath,
   });
   if (!language) {
     statusBarItem.hide();
