@@ -21,6 +21,10 @@ Inspired by linux cli tool **wc**, instead of counting words, this tool will **l
 
 ![example](assets/example2.png)
 
+### 0.5.1
+
+1. Add suport for CUDA
+
 ### 0.5.0
 
 1. Add support of GDScript

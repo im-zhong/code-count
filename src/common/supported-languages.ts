@@ -35,6 +35,8 @@ const supportedLanguageSuffixes: Record<SupportedLanguage, string[]> = {
     ".hxx",
     ".c++",
     ".h++",
+    // cuda
+    ".cu",
   ],
   [SupportedLanguage.GDSCRIPT]: [".gd"],
 };
