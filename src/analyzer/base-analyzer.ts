@@ -70,6 +70,7 @@ export abstract class Analyzer {
 
       return this.lineClassestoFileResult({ lineClasses: this.lineClasses });
     } catch (e) {
+      // TODO: Maybe print the error message to the output channel
       return undefined;
     }
   }
@@ -139,23 +140,38 @@ export abstract class Analyzer {
 
     let isFoundDelimiter = false;
     let offset = -1;
-    while (
-      (offset = this.stringStream
-        .getCurrentLine()
-        .indexOf(delimiter, this.stringStream.getCurrentOffset())) !== -1
-    ) {
-      // whatever, we need to pass the found delimiter
-      this.stringStream.setCurrentOffset(offset + delimiter.length);
+    while (!isFoundDelimiter) {
+      // find delimiter in the rest of the line
+      while (
+        (offset = this.stringStream
+          .getCurrentLine()
+          .indexOf(delimiter, this.stringStream.getCurrentOffset())) !== -1
+      ) {
+        // whatever, we need to pass the found delimiter
+        this.stringStream.setCurrentOffset(offset + delimiter.length);
 
-      // then check if it is a escape sequence, if not, we find the end of the string
-      if (!this.isFoundEscapeSequence({ backLength: delimiter.length + 1 })) {
-        isFoundDelimiter = true;
-        break;
+        // then check if it is a escape sequence, if not, we find the end of the string
+        if (!this.isFoundEscapeSequence({ backLength: delimiter.length + 1 })) {
+          isFoundDelimiter = true;
+          break;
+        }
       }
-    }
 
-    if (!isFoundDelimiter) {
-      throw new Error("string not closed");
+      // 这个异常还是可以抱的 就是我们真的没有找到 closed string
+      if (!isFoundDelimiter) {
+        // 那这样的话，我们这里就不能直接抛出异常，而是要一直跳过字符串，知道找到真正的结束富豪
+        // 当且仅当最后一个符号是 \ 的时候，我们的分析就要继续！
+        // check if the last character is a backslash
+        if (this.stringStream.getCurrentLine().slice(-1) === "\\") {
+          // wee need to skip the current line and continue to find the end of string in the next line
+          // we need to get the next line
+          if (this.getLineAndResetOffset() === undefined) {
+            throw new Error("find string closed but EOF");
+          }
+        } else {
+          throw new Error("string not closed");
+        }
+      }
     }
 
     this.setLineClass({ lineClass: LineClass.Code });
