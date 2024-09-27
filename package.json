@@ -3,7 +3,7 @@
   "displayName": "Code Count",
   "description": "Count all your codes in your workspaces by lines!",
   "icon": "assets/icon.png",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "publisher": "im-zhong",
   "engines": {
     "vscode": "^1.74.0"

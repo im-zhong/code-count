@@ -21,6 +21,11 @@ Inspired by linux cli tool **wc**, instead of counting words, this tool will **l
 
 ![example](assets/example2.png)
 
+### 0.5.2
+
+1. fix count incorrecly when string span multiple lines by slash(\\) at the end.
+2. add new commands: summarize codes and comments of workspaces.
+
 ### 0.5.1
 
 1. Add suport for CUDA
