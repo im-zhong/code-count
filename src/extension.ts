@@ -9,6 +9,7 @@ import path from "path";
 // eslint-disable-next-line import/no-unresolved
 import * as vscode from "vscode";
 
+import { summarize } from "./command/summarize";
 import {
   getIconFromSupportedLanguage,
   getSupportedLanguageFromPath,
@@ -40,6 +41,7 @@ let backgroundToggle = false;
 
 // the activate function in a Visual Studio Code extension is called only once throughout the entire lifecycle of the extension. It is invoked by VS Code when the extension is first activated. Activation can occur due to a variety of reasons specified in the extension's package.json file, such as the user opening a file of a certain type, running a command defined by the extension, or other activation events. The purpose of the activate function is to set up any necessary resources, commands, listeners, or other initialization tasks needed for the extension to work.
 export async function activate({ subscriptions }: vscode.ExtensionContext) {
+  // https://code.visualstudio.com/api/extension-guides/command#creating-new-commands
   // register a command that is invoked when the status bar item is selected
   const commandId = "code-count.showCodeCount";
   // When you add disposables to the subscriptions array,
@@ -49,6 +51,25 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
     vscode.commands.registerCommand(commandId, () => {
       backgroundToggle = !backgroundToggle;
       updateStatusBarItem();
+    }),
+  );
+
+  // register a command that will generate a summary file
+  subscriptions.push(
+    vscode.commands.registerCommand("code-count.summarize", async () => {
+      // vscode.window.showInformationMessage("Summarize");
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      if (workspaceFolders && workspaceFolders.length > 0) {
+        // 这里或许应该改成一个循环
+        // 这样我们可以一次性获取所有的workspace的summary
+        // 更方便我们做测试了
+        // 反正在代码里也知识多了一个循环而已
+        // const workspacePath = workspaceFolders[0].uri.fsPath;
+        // vscode.window.showInformationMessage("Summarize");
+        await summarize({ workspaceFolders });
+      } else {
+        vscode.window.showErrorMessage("No workspace folder is open.");
+      }
     }),
   );
 
