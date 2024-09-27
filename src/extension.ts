@@ -54,18 +54,11 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
     }),
   );
 
-  // register a command that will generate a summary file
+  // register a command that will generate summary files for workspaces
   subscriptions.push(
     vscode.commands.registerCommand("code-count.summarize", async () => {
-      // vscode.window.showInformationMessage("Summarize");
       const workspaceFolders = vscode.workspace.workspaceFolders;
       if (workspaceFolders && workspaceFolders.length > 0) {
-        // 这里或许应该改成一个循环
-        // 这样我们可以一次性获取所有的workspace的summary
-        // 更方便我们做测试了
-        // 反正在代码里也知识多了一个循环而已
-        // const workspacePath = workspaceFolders[0].uri.fsPath;
-        // vscode.window.showInformationMessage("Summarize");
         await summarize({ workspaceFolders });
       } else {
         vscode.window.showErrorMessage("No workspace folder is open.");
