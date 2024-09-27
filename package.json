@@ -24,6 +24,12 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "code-count.summarize",
+        "title": "Summarize codes and comments of workspaces"
+      }
+    ],
     "icons": {
       "python-icon": {
         "description": "python icon",
