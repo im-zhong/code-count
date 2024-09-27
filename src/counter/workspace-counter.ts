@@ -16,6 +16,10 @@ export class WorkspaceCounter {
     this.workspaceResults = {};
   }
 
+  getWorkspaceResults() {
+    return this.workspaceResults;
+  }
+
   async countWorkspace({
     workspacePath,
     language,
