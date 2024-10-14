@@ -21,6 +21,10 @@ Inspired by linux cli tool **wc**, instead of counting words, this tool will **l
 
 ![example](assets/example2.png)
 
+### 0.5.3
+
+1. add support for C#
+
 ### 0.5.2
 
 1. fix count incorrecly when string span multiple lines by slash(\\) at the end.
