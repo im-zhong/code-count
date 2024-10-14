@@ -5,6 +5,7 @@ import { SupportedLanguage } from "../common/supported-languages";
 
 import { Analyzer } from "./base-analyzer";
 import { CppAnalyzer } from "./cpp-analyzer";
+import { CSharpAnalyzer } from "./csharp-analyzer";
 import { GDSAnalyzer } from "./gdscript-analyzer";
 import { PyAnalyzer } from "./py-analyzer";
 import { TsAnalyzer } from "./ts-analyzer";
@@ -27,6 +28,8 @@ export function newAnalyzer({
       return new CppAnalyzer({ text });
     case SupportedLanguage.GDSCRIPT:
       return new GDSAnalyzer({ text, absolutePath });
+    case SupportedLanguage.CSHARP:
+      return new CSharpAnalyzer({ text });
     default:
       return undefined;
   }

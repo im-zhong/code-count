@@ -6,6 +6,7 @@ export enum SupportedLanguage {
   TYPE_SCRIPT = "typescript",
   CPP = "cpp",
   GDSCRIPT = "gdscript",
+  CSHARP = "csharp",
 }
 
 // record construct a type with a set of properties K in enumeration one by one
@@ -39,6 +40,7 @@ const supportedLanguageSuffixes: Record<SupportedLanguage, string[]> = {
     ".cu",
   ],
   [SupportedLanguage.GDSCRIPT]: [".gd"],
+  [SupportedLanguage.CSHARP]: [".cs"],
 };
 
 export function getLanguageSuffixes({
@@ -81,5 +83,7 @@ export function getIconFromSupportedLanguage({
       return "javascript-icon";
     case SupportedLanguage.GDSCRIPT:
       return "python-icon";
+    case SupportedLanguage.CSHARP:
+      return "cuttlefish-icon";
   }
 }
