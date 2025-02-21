@@ -78,6 +78,7 @@ Initial release of code count tool, support
 * [ ] add support for golang
 * [ ] add support for rust
 * [ ] maybe change the example images in readme
+* [ ] when open a file that is not in the supported language, do not remove the status bar item, just show that current line of code is zero.
 
 ---
 
