@@ -8,6 +8,7 @@ import { CppAnalyzer } from "./cpp-analyzer";
 import { CSharpAnalyzer } from "./csharp-analyzer";
 import { GDSAnalyzer } from "./gdscript-analyzer";
 import { PyAnalyzer } from "./py-analyzer";
+import { RustAnalyzer } from "./rust-analyzer";
 import { TsAnalyzer } from "./ts-analyzer";
 
 export function newAnalyzer({
@@ -30,6 +31,8 @@ export function newAnalyzer({
       return new GDSAnalyzer({ text, absolutePath });
     case SupportedLanguage.CSHARP:
       return new CSharpAnalyzer({ text });
+    case SupportedLanguage.RUST:
+      return new RustAnalyzer({ text });
     default:
       return undefined;
   }
