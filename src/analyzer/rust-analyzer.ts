@@ -70,7 +70,6 @@ export class RustAnalyzer extends Analyzer {
         }
 
         return false;
-
     }
 
     isLifetimeAnnotation(): boolean {
@@ -107,33 +106,51 @@ export class RustAnalyzer extends Analyzer {
         return line[i] !== "'";
     }
 
-
-    isRawStringHead(): boolean {
+    // return except the first r
+    getRawStringHead(): string {
         const line = this.stringStream.getCurrentLine();
         const offset = this.stringStream.getCurrentOffset();
 
-        return line.slice(offset, offset + 2) === 'r"' ||
-            line.slice(offset, offset + 3) === 'r#"' ||
-            line.slice(offset, offset + 4) === 'r##"';
+        // return line.slice(offset, offset + 2) === 'r"' ||
+        //     line.slice(offset, offset + 3) === 'r#"' ||
+        //     line.slice(offset, offset + 4) === 'r##"';
+        if (line[offset] !== "r") {
+            return "";
+        }
+
+        // continue count the number of #
+        let i = offset + 1;
+        for (; i < line.length; i++) {
+            if (line[i] !== "#") {
+                break;
+            }
+        }
+
+        // now i point to the first non-# character
+        if (i < line.length && line[i] === '"') {
+            return line.slice(offset + 1, i + 1);
+        }
+        return "";
+    }
+
+    // A raw string literal in Rust is written with the prefix r (optionally followed by #s):
+    // r"..." or r#"..."# or r##"..."##, etc.
+    isRawStringHead(): boolean {
+        return this.getRawStringHead().length > 0;
     }
 
     skipRawString(): void {
         // determine the raw string head is r" or r#"
-        const line = this.stringStream.getCurrentLine();
-        const offset = this.stringStream.getCurrentOffset();
-        let delimiterLength = 1;
-        if (line.slice(offset, offset + 3) === 'r#"') {
-            delimiterLength = 2;
-        } else if (line.slice(offset, offset + 4) === 'r##"') {
-            delimiterLength = 3;
-        }
+        // const line = this.stringStream.getCurrentLine();
+        // const offset = this.stringStream.getCurrentOffset();
+        const delimiter = this.getRawStringHead();
 
         // raw string: r"..." or r#"...#", then delimeter either be " or #"
         // example: let quotes = r#"And then I said: "There is no escape!""#;
         // offset -> r, but r should not count as a part of raw string
-        const delimiter = line.slice(offset + 1, offset + 1 + delimiterLength);
+        // const delimiter = line.slice(offset + 1, offset + 1 + delimiterLength);
         this.skipUntilFindDelimiter({
-            firstSkipLength: 1 + delimiterLength,
+            firstSkipLength: 1 + delimiter.length,
             delimiter: delimiter.split("").reverse().join(""), // reverse the delimiter for rust
             lineClass: LineClass.Code,
         });

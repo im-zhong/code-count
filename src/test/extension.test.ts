@@ -267,4 +267,112 @@ macro_rules! template {
         assert.strictEqual(result.codes, 36);
         assert.strictEqual(result.comments, 3);
     });
+
+
+    // case 7: char literal
+    // BUG: now in our implementation, we assume that the char literal may span multiple lines
+    // which is not correct for many languages.
+    // the lifetime must be on the same line!
+
+    // 'hello\0', 这个语法本来就是错误的
+    // 程序判断 'hello 是lifetime annotation
+    // 然后又认为 '' char literal可以换行
+    // 这个corner case就不处理了，就认为是错误吧，而且本来就是错误
+    //     test("case 7", () => {
+
+    //         const code = `
+
+    //         #![allow(unused)]
+    // fn main() {
+    //     let _foo = b'hello\0';
+    //     //~^ ERROR character literal may only contain one codepoint
+    //     //~| HELP if you meant to write a byte string literal, use double quotes
+    //     let _bar = 'hello';
+    //     //~^ ERROR character literal may only contain one codepoint
+    //     //~| HELP if you meant to write a string literal, use double quotes
+    // }
+
+    //         `;
+
+    //         const analyzer = new RustAnalyzer({ text: code });
+    //         // Add your test logic here
+    //         const result = analyzer.analyze();
+    //         if (result === undefined) {
+    //             assert.fail("Analyzer returned undefined");
+    //         }
+
+    //         assert.strictEqual(result.codes, 5);
+    //         assert.strictEqual(result.comments, 4);
+    //     });
+
+    // TODO: fix raw string with multiple # like r##"..."##
+    test("case 8", () => {
+
+        const code = `
+#![allow(clippy::no_effect, unused)]
+#![warn(clippy::needless_raw_string_hashes)]
+
+fn main() {
+    r#"\aaa"#;
+    //~^ needless_raw_string_hashes
+    r##"Hello "world"!"##;
+    //~^ needless_raw_string_hashes
+    r######" "### "## "# "######;
+    //~^ needless_raw_string_hashes
+    r######" "aa" "# "## "######;
+    //~^ needless_raw_string_hashes
+    br#"\aaa"#;
+    //~^ needless_raw_string_hashes
+    br##"Hello "world"!"##;
+    //~^ needless_raw_string_hashes
+    br######" "### "## "# "######;
+    //~^ needless_raw_string_hashes
+    br######" "aa" "# "## "######;
+    //~^ needless_raw_string_hashes
+    cr#"\aaa"#;
+    //~^ needless_raw_string_hashes
+    cr##"Hello "world"!"##;
+    //~^ needless_raw_string_hashes
+    cr######" "### "## "# "######;
+    //~^ needless_raw_string_hashes
+    cr######" "aa" "# "## "######;
+    //~^ needless_raw_string_hashes
+
+    r#"
+    //~^ needless_raw_string_hashes
+        \a
+        multiline
+        string
+    "#;
+
+    r###"rust"###;
+    //~^ needless_raw_string_hashes
+    r#"hello world"#;
+    //~^ needless_raw_string_hashes
+}
+
+fn issue_13503() {
+    println!(r"SELECT * FROM posts");
+    println!(r#"SELECT * FROM posts"#);
+    //~^ needless_raw_string_hashes
+    println!(r##"SELECT * FROM "posts""##);
+    //~^ needless_raw_string_hashes
+    println!(r##"SELECT * FROM "posts""##);
+    //~^ needless_raw_string_hashes
+
+    // Test arguments as well
+    println!("{}", r"foobar".len());
+}
+
+        `;
+        const analyzer = new RustAnalyzer({ text: code });
+        // Add your test logic here
+        const result = analyzer.analyze();
+        if (result === undefined) {
+            assert.fail("Analyzer returned undefined");
+        }
+
+        assert.strictEqual(result.codes, 31);
+        assert.strictEqual(result.comments, 18);
+    });
 });
