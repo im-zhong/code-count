@@ -9,32 +9,22 @@ import path from "path";
 // eslint-disable-next-line import/no-unresolved
 import * as vscode from "vscode";
 
+import { reload, isReloading } from "./command/reload";
 import { summarize } from "./command/summarize";
 import {
-  getIconFromSupportedLanguage,
   getSupportedLanguageFromPath,
   SupportedLanguage,
 } from "./common/supported-languages";
-import { LineClass, FileResult } from "./common/types";
 import { WorkspaceCounter } from "./counter/workspace-counter";
+import { updateStatusBarItem } from "./display/status";
 import { filterManager } from "./filter/filter-manager";
+import { getWorkspaceFolderFromUri } from "./utils/file";
 import { registerLoadingStatusBarItem } from "./utils/loading-status-bar-item";
 import { activateOutputChannel } from "./utils/output-channel";
 
+
 let statusBarItem: vscode.StatusBarItem;
 let workspaceCounter = new WorkspaceCounter();
-
-// https://github.com/microsoft/vscode-extension-samples/issues/22
-// decorationType should be created only once
-const codeDecorationType = vscode.window.createTextEditorDecorationType({
-  backgroundColor: "rgba(0,255,0,0.3)",
-});
-const commentDecorationType = vscode.window.createTextEditorDecorationType({
-  backgroundColor: "rgba(255,0,0,0.3)",
-});
-const codeCommentDecorationType = vscode.window.createTextEditorDecorationType({
-  backgroundColor: "rgba(0,0,255,0.3)",
-});
 
 // default do not toggle the background color
 let backgroundToggle = false;
@@ -50,7 +40,7 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
   subscriptions.push(
     vscode.commands.registerCommand(commandId, () => {
       backgroundToggle = !backgroundToggle;
-      updateStatusBarItem();
+      updateStatusBarItem({ workspaceCounter, statusBarItem, backgroundToggle });
     }),
   );
 
@@ -60,6 +50,18 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
       const workspaceFolders = vscode.workspace.workspaceFolders;
       if (workspaceFolders && workspaceFolders.length > 0) {
         await summarize({ workspaceFolders });
+      } else {
+        vscode.window.showErrorMessage("No workspace folder is open.");
+      }
+    }),
+  );
+
+  // register a command that will reload the project
+  subscriptions.push(
+    vscode.commands.registerCommand("code-count.reload", async () => {
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      if (workspaceFolders && workspaceFolders.length > 0) {
+        await reload({ workspaceFolders, workspaceCounter, statusBarItem, backgroundToggle });
       } else {
         vscode.window.showErrorMessage("No workspace folder is open.");
       }
@@ -95,7 +97,7 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
         if (textEditor) {
           await lookFile(textEditor.document.uri);
         }
-        await updateStatusBarItem();
+        await updateStatusBarItem({ workspaceCounter, statusBarItem, backgroundToggle });
       },
     ),
   );
@@ -105,7 +107,7 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
       if (notebookEditor) {
         await lookFile(notebookEditor.notebook.uri);
       }
-      await updateStatusBarItem();
+      await updateStatusBarItem({ workspaceCounter, statusBarItem, backgroundToggle });
     },
   );
 
@@ -119,7 +121,7 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
     vscode.workspace.onDidSaveTextDocument(
       async (document: vscode.TextDocument) => {
         await saveFile(document.uri);
-        await updateStatusBarItem();
+        await updateStatusBarItem({ workspaceCounter, statusBarItem, backgroundToggle });
       },
     ),
   );
@@ -127,7 +129,7 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
     vscode.workspace.onDidSaveNotebookDocument(
       async (document: vscode.NotebookDocument) => {
         await saveFile(document.uri);
-        await updateStatusBarItem();
+        await updateStatusBarItem({ workspaceCounter, statusBarItem, backgroundToggle });
       },
     ),
   );
@@ -238,29 +240,7 @@ const deleteFile = async (uri: vscode.Uri) => {
   });
 };
 
-const getWorkspaceFolderFromUri = ({
-  uri,
-}: {
-  uri: vscode.Uri;
-}): vscode.WorkspaceFolder | undefined => {
-  // Jupyter Notebook URIs are handled differently compared to regular file URIs in Visual Studio Code
-  let workspaceFolder: vscode.WorkspaceFolder | undefined = undefined;
-  // vscode.workspace.notebookDocuments: All notebook documents currently known to the editor.
-  const notebookDocument = vscode.workspace.notebookDocuments.find(
-    (doc) => doc.uri.fsPath === uri.fsPath,
-  );
-  if (notebookDocument) {
-    // vscode.workspace.getWorkspaceFolder(editor.document.uri)
-    // Purpose: This function is used to retrieve the workspace folder that contains a given file. In a multi-root workspace, this is particularly useful because it allows you to determine which of the multiple folders a file belongs to.
-    // Usage: It is used when you need to perform operations relative to the folder containing a file, such as resolving relative paths or applying folder-specific configurations.
-    // Parameters: It takes a Uri object representing the file's location.
-    // Return Value: It returns a WorkspaceFolder object that contains information about the workspace folder, such as its uri, name, and index. If the file is not contained in any workspace folder, it returns undefined.
-    workspaceFolder = vscode.workspace.getWorkspaceFolder(notebookDocument.uri);
-  } else {
-    workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-  }
-  return workspaceFolder;
-};
+
 
 const needHandle = async (
   uri: vscode.Uri,
@@ -271,6 +251,12 @@ const needHandle = async (
   }
   | undefined
 > => {
+
+  // if we are in reloading status, do nothing
+  if (isReloading) {
+    return undefined;
+  }
+
   // vscode.workspace.name
   // Purpose: This property provides the name of the workspace. In the context of VS Code, a "workspace" can refer to a single folder opened in VS Code or a multi-root workspace (which is a collection of folders that are opened in a single VS Code instance).
   // Usage: It is useful when you need to display the name of the current workspace or when you need to differentiate between workspaces in a multi-workspace environment.
@@ -296,89 +282,3 @@ const needHandle = async (
   return { workspaceFolder, language };
 };
 
-async function updateStatusBarItem(): Promise<void> {
-  const editor = vscode.window.activeTextEditor;
-  if (!editor) {
-    statusBarItem.hide();
-    return;
-  }
-
-  const workspaceFolder = getWorkspaceFolderFromUri({
-    uri: editor.document.uri,
-  });
-  if (!workspaceFolder) {
-    statusBarItem.hide();
-    return;
-  }
-
-  const language = getSupportedLanguageFromPath({
-    path: editor.document.uri.fsPath,
-  });
-  if (!language) {
-    statusBarItem.hide();
-    return;
-  }
-
-  const fileResult = workspaceCounter.getFileResult({
-    workspacePath: workspaceFolder.uri.fsPath,
-    language,
-    absolutePath: editor.document.uri.fsPath,
-  });
-  if (!fileResult) {
-    statusBarItem.hide();
-    return;
-  }
-
-  const { totalCodes, totalComments } =
-    workspaceCounter.getTotalCodesAndComments({
-      workspacePath: workspaceFolder.uri.fsPath,
-      language,
-    });
-
-  statusBarItem.text = `$(${getIconFromSupportedLanguage({ language })}) Codes: ${fileResult.codes}/${totalCodes}, Annos: ${fileResult.comments}/${totalComments}`;
-  statusBarItem.show();
-
-  clearBackground({ editor });
-  updateBackground({ editor, result: fileResult });
-}
-
-function clearBackground({ editor }: { editor: vscode.TextEditor }) {
-  editor.setDecorations(codeDecorationType, []);
-  editor.setDecorations(commentDecorationType, []);
-  editor.setDecorations(codeCommentDecorationType, []);
-}
-
-function updateBackground({
-  editor,
-  result,
-}: {
-  editor: vscode.TextEditor;
-  result: FileResult;
-}) {
-  if (!backgroundToggle) {
-    return;
-  }
-
-  let codes = [];
-  let comments = [];
-  let codeComments = [];
-  for (let lineNo = 0; lineNo < result.lineClasses.length; lineNo++) {
-    const range = new vscode.Range(
-      new vscode.Position(lineNo, 0),
-      new vscode.Position(lineNo, editor.document.lineAt(lineNo).text.length),
-    );
-
-    const lineClass = result.lineClasses[lineNo];
-    if (lineClass === LineClass.Code) {
-      codes.push(range);
-    } else if (lineClass === LineClass.Comment) {
-      comments.push(range);
-    } else if (lineClass === LineClass.CodeComment) {
-      codeComments.push(range);
-    }
-  }
-
-  editor.setDecorations(codeDecorationType, codes);
-  editor.setDecorations(commentDecorationType, comments);
-  editor.setDecorations(codeCommentDecorationType, codeComments);
-}

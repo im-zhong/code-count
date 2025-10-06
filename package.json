@@ -27,7 +27,11 @@
     "commands": [
       {
         "command": "code-count.summarize",
-        "title": "Summarize codes and comments of workspaces"
+        "title": "Code Counter: Summarize codes and comments of workspaces"
+      },
+      {
+        "command": "code-count.reload",
+        "title": "Code Counter: Reload codes and comments of the project"
       }
     ],
     "icons": {

@@ -144,4 +144,8 @@ export class WorkspaceCounter {
       delete this.workspaceResults[workspacePath];
     }
   }
+
+  clearWorkspaceResults() {
+    this.workspaceResults = {};
+  }
 }
