@@ -7,6 +7,7 @@ import * as vscode from "vscode";
 
 import { isSpace, isAlpha } from "../utils/string-utils";
 import { RustAnalyzer } from "../analyzer/rust-analyzer";
+import { SQLAnalyzer } from "../analyzer/sql-analyzer";
 
 // import * as fs from "fs/promises";
 
@@ -375,6 +376,133 @@ fn issue_13503() {
 
         assert.strictEqual(result.codes, 31);
         assert.strictEqual(result.comments, 18);
+    });
+});
+
+suite("SQL Analyzer Test Suite", () => {
+
+    // Test basic SQL queries
+    test("basic SELECT query", () => {
+        const code = `
+-- This is a simple SELECT query
+SELECT id, name, email
+FROM users
+WHERE active = 1
+ORDER BY name;
+        `;
+
+        const analyzer = new SQLAnalyzer({ text: code });
+        const result = analyzer.analyze();
+
+        if (result === undefined) {
+            assert.fail("Analyzer returned undefined");
+        }
+
+        assert.strictEqual(result.codes, 4);
+        assert.strictEqual(result.comments, 1);
+    });
+
+    // Test SQL with block comments
+    test("SQL with block comments", () => {
+        const code = `
+/* This is a block comment */
+SELECT * FROM users;
+
+/*
+ * Multi-line block comment
+ * about the table structure
+ */
+CREATE TABLE users (
+    id INT PRIMARY KEY,
+    name VARCHAR(100)
+);
+        `;
+
+        const analyzer = new SQLAnalyzer({ text: code });
+        const result = analyzer.analyze();
+
+        if (result === undefined) {
+            assert.fail("Analyzer returned undefined");
+        }
+
+        assert.strictEqual(result.codes, 5);
+        assert.strictEqual(result.comments, 5);
+    });
+
+    // Test SQL with strings and mixed content
+    test("SQL with strings and mixed content", () => {
+        const code = `
+-- Insert statement with string values
+INSERT INTO users (name, email)
+VALUES ('John Doe', 'john@example.com');
+
+-- Update with string condition
+UPDATE users
+SET email = 'john.doe@example.com'
+WHERE name = 'John';
+        `;
+
+        const analyzer = new SQLAnalyzer({ text: code });
+        const result = analyzer.analyze();
+
+        if (result === undefined) {
+            assert.fail("Analyzer returned undefined");
+        }
+
+        assert.strictEqual(result.codes, 5);
+        assert.strictEqual(result.comments, 2);
+    });
+
+    // Test SQL with empty lines and mixed comments
+    test("SQL with empty lines and mixed comments", () => {
+        const code = `
+-- Database setup script
+
+/* Create users table */
+CREATE TABLE users (
+    id INT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(255)
+);
+
+-- Add some sample data
+INSERT INTO users (id, name, email)
+VALUES (1, 'Alice', 'alice@example.com');
+
+/* End of script */
+        `;
+
+        const analyzer = new SQLAnalyzer({ text: code });
+        const result = analyzer.analyze();
+
+        if (result === undefined) {
+            assert.fail("Analyzer returned undefined");
+        }
+
+        assert.strictEqual(result.codes, 7);
+        assert.strictEqual(result.comments, 4);
+    });
+
+    // Test SQL with quoted identifiers
+    test("SQL with quoted identifiers", () => {
+        const code = `
+-- Using quoted identifiers for reserved words
+SELECT "order", "limit" FROM orders;
+
+UPDATE orders
+SET "order" = 'completed'
+WHERE "limit" > 100;
+        `;
+
+        const analyzer = new SQLAnalyzer({ text: code });
+        const result = analyzer.analyze();
+
+        if (result === undefined) {
+            assert.fail("Analyzer returned undefined");
+        }
+
+        assert.strictEqual(result.codes, 4);
+        assert.strictEqual(result.comments, 1);
     });
 });
 

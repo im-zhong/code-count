@@ -10,6 +10,7 @@ export enum SupportedLanguage {
   RUST = "rust",
   GOLANG = "golang",
   JAVA = "java",
+  SQL = "sql",
 }
 
 // record construct a type with a set of properties K in enumeration one by one
@@ -47,6 +48,7 @@ const supportedLanguageSuffixes: Record<SupportedLanguage, string[]> = {
   [SupportedLanguage.RUST]: [".rs"],
   [SupportedLanguage.GOLANG]: [".go"],
   [SupportedLanguage.JAVA]: [".java"],
+  [SupportedLanguage.SQL]: [".sql"],
 };
 
 export function getLanguageSuffixes({
@@ -97,5 +99,7 @@ export function getIconFromSupportedLanguage({
       return "python-icon";
     case SupportedLanguage.JAVA:
       return "javascript-icon";
+    case SupportedLanguage.SQL:
+      return "python-icon";
   }
 }
