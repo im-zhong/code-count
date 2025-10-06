@@ -8,6 +8,7 @@ import { CppAnalyzer } from "./cpp-analyzer";
 import { CSharpAnalyzer } from "./csharp-analyzer";
 import { GDSAnalyzer } from "./gdscript-analyzer";
 import { GolangAnalyzer } from "./go-analyzer";
+import { JavaAnalyzer } from "./java-analyzer";
 import { PyAnalyzer } from "./py-analyzer";
 import { RustAnalyzer } from "./rust-analyzer";
 import { TsAnalyzer } from "./ts-analyzer";
@@ -36,6 +37,8 @@ export function newAnalyzer({
       return new RustAnalyzer({ text });
     case SupportedLanguage.GOLANG:
       return new GolangAnalyzer({ text });
+    case SupportedLanguage.JAVA:
+      return new JavaAnalyzer({ text });
     default:
       return undefined;
   }
