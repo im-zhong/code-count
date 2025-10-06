@@ -135,7 +135,7 @@ export abstract class Analyzer {
 
   skipString() {
     const delimiter = this.stringStream.getCurrentCharacter();
-    // first skip the first delimiter: ' or "
+    // first skip the first delimiter: ' or " or `
     this.stringStream.addToCurrentOffset(delimiter.length);
 
     let isFoundDelimiter = false;
