@@ -11,6 +11,7 @@ export enum SupportedLanguage {
   GOLANG = "golang",
   JAVA = "java",
   SQL = "sql",
+  SHELL = "shell",
 }
 
 // record construct a type with a set of properties K in enumeration one by one
@@ -49,6 +50,7 @@ const supportedLanguageSuffixes: Record<SupportedLanguage, string[]> = {
   [SupportedLanguage.GOLANG]: [".go"],
   [SupportedLanguage.JAVA]: [".java"],
   [SupportedLanguage.SQL]: [".sql"],
+  [SupportedLanguage.SHELL]: [".sh", ".bash", ".zsh"],
 };
 
 export function getLanguageSuffixes({
@@ -100,6 +102,8 @@ export function getIconFromSupportedLanguage({
     case SupportedLanguage.JAVA:
       return "javascript-icon";
     case SupportedLanguage.SQL:
+      return "python-icon";
+    case SupportedLanguage.SHELL:
       return "python-icon";
   }
 }

@@ -8,6 +8,7 @@ import * as vscode from "vscode";
 import { isSpace, isAlpha } from "../utils/string-utils";
 import { RustAnalyzer } from "../analyzer/rust-analyzer";
 import { SQLAnalyzer } from "../analyzer/sql-analyzer";
+import { ShellAnalyzer } from "../analyzer/shell-analyzer";
 
 // import * as fs from "fs/promises";
 
@@ -503,6 +504,159 @@ WHERE "limit" > 100;
 
         assert.strictEqual(result.codes, 4);
         assert.strictEqual(result.comments, 1);
+    });
+});
+
+suite("Shell Analyzer Test Suite", () => {
+
+    // Test basic shell script
+    test("basic shell script", () => {
+        const code = `
+#!/bin/bash
+
+# This is a simple shell script
+echo "Hello, World!"
+
+# Define a variable
+name="John"
+echo "Hello, $name!"
+        `;
+
+        const analyzer = new ShellAnalyzer({ text: code });
+        const result = analyzer.analyze();
+
+        if (result === undefined) {
+            assert.fail("Analyzer returned undefined");
+        }
+
+        assert.strictEqual(result.codes, 3);
+        assert.strictEqual(result.comments, 3);
+    });
+
+    // Test shell script with variables and commands
+    test("shell script with variables and commands", () => {
+        const code = `
+#!/bin/bash
+
+# Initialize variables
+count=10
+message="Processing files"
+
+# Loop through files
+for file in *.txt; do
+    echo "Processing: $file"
+    count=$((count + 1))
+done
+
+echo "Total processed: $count"
+        `;
+
+        const analyzer = new ShellAnalyzer({ text: code });
+        const result = analyzer.analyze();
+
+        if (result === undefined) {
+            assert.fail("Analyzer returned undefined");
+        }
+
+        assert.strictEqual(result.codes, 7);
+        assert.strictEqual(result.comments, 3);
+    });
+
+    // Test shell script with functions
+    test("shell script with functions", () => {
+        const code = `
+#!/bin/bash
+
+# Function to greet user
+greet() {
+    echo "Hello, $1!"
+}
+
+# Function to calculate sum
+add_numbers() {
+    local a=$1
+    local b=$2
+    echo $((a + b))
+}
+
+# Main script
+greet "Alice"
+result=$(add_numbers 5 3)
+echo "Result: $result"
+        `;
+
+        const analyzer = new ShellAnalyzer({ text: code });
+        const result = analyzer.analyze();
+
+        if (result === undefined) {
+            assert.fail("Analyzer returned undefined");
+        }
+
+        assert.strictEqual(result.codes, 11);
+        assert.strictEqual(result.comments, 4);
+    });
+
+    // Test shell script with conditionals
+    test("shell script with conditionals", () => {
+        const code = `
+#!/bin/bash
+
+# Check if file exists
+filename="test.txt"
+
+if [ -f "$filename" ]; then
+    echo "File exists: $filename"
+elif [ -e "$filename" ]; then
+    echo "File is a different type"
+else
+    echo "File does not exist"
+fi
+
+# Test numeric comparison
+number=42
+if [ $number -gt 0 ]; then
+    echo "Number is positive"
+fi
+        `;
+
+        const analyzer = new ShellAnalyzer({ text: code });
+        const result = analyzer.analyze();
+
+        if (result === undefined) {
+            assert.fail("Analyzer returned undefined");
+        }
+
+        assert.strictEqual(result.codes, 12);
+        assert.strictEqual(result.comments, 3);
+    });
+
+    // Test shell script with strings and escaped quotes
+    test("shell script with strings and escaped quotes", () => {
+        const code = `
+#!/bin/bash
+
+# String with escaped quotes
+message='He said: "Hello world"'
+echo $message
+
+# Double quoted string with variables
+name="Alice"
+greeting="Hello, $name!"
+echo $greeting
+
+# Complex escaping
+echo "This contains \\"double quotes\\" and \\$variables"
+        `;
+
+        const analyzer = new ShellAnalyzer({ text: code });
+        const result = analyzer.analyze();
+
+        if (result === undefined) {
+            assert.fail("Analyzer returned undefined");
+        }
+
+        assert.strictEqual(result.codes, 6);
+        assert.strictEqual(result.comments, 4);
     });
 });
 
