@@ -159,8 +159,6 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
     }),
   );
 
-  let selectionTimer: NodeJS.Timeout | undefined;
-
   // An Event which fires when the selection in an editor has changed.
   subscriptions.push(
     vscode.window.onDidChangeTextEditorSelection(
@@ -179,15 +177,20 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
       }
     ));
 
-  // TODO: 先不实现notebook了
   // An Event which fires when the notebook editor selections have changed.
   // subscriptions.push(
   //   vscode.window.onDidChangeNotebookEditorSelection(
   //     async (event: vscode.NotebookEditorSelectionChangeEvent) => {
-
-
-  //       if (event.notebookEditor === vscode.window.activeNotebookEditor) {
-  //         await updateStatusBarItem({ workspaceCounter, statusBarItem, backgroundToggle, selectedText: getSelectedFullLines({ editor: event.notebookEditor, selections: event.selections }) });
+  //       // only when user select multiple lines, we will show the selected codes and comments
+  //       if (event.selections.length > 0 && !event.selections[0].isEmpty) {
+  //         await updateStatusBarItem({
+  //           workspaceCounter, statusBarItem, backgroundToggle,
+  //           selectedText: getSelectedNotebookText({ notebookEditor: event.notebookEditor, selections: event.selections })
+  //         });
+  //       } else {
+  //         await updateStatusBarItem({
+  //           workspaceCounter, statusBarItem, backgroundToggle, selectedText: undefined
+  //         });
   //       }
   //     },
   //   ),
@@ -316,6 +319,7 @@ const needHandle = async (
 };
 
 
+// 神奇的是，notebook也是走的这个普通文件的事件
 function getSelectedFullLines({ editor, selections }: { editor: vscode.TextEditor, selections: readonly vscode.Selection[] }): string | undefined {
   const document = editor.document;
   const lines = [];
@@ -328,6 +332,18 @@ function getSelectedFullLines({ editor, selections }: { editor: vscode.TextEdito
   return lines.join('\n');
 }
 
+// 这个只能一次获得选中的cell的所有内容
+// function getSelectedNotebookText({ notebookEditor, selections }: { notebookEditor: vscode.NotebookEditor, selections: readonly vscode.NotebookRange[] }): string {
+//   const selectedTexts: string[] = [];
 
+//   for (const range of selections) {
+//     const cells = notebookEditor.notebook.getCells().slice(range.start, range.end);
+//     for (const cell of cells) {
+//       selectedTexts.push(cell.document.getText());
+//     }
+//   }
+
+//   return selectedTexts.join('\n\n'); // separate cells by blank line
+// }
 
 

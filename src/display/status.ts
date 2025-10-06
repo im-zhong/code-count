@@ -19,10 +19,14 @@ import { clearBackground, updateBackground } from "./background";
 // so we need the analyzer factory
 export function getSelectedCodesAndComments({ text }: { text: string }): FileResult | undefined {
 
-    const path = vscode.window.activeTextEditor?.document.uri.fsPath;
+    let path = vscode.window.activeTextEditor?.document.uri.fsPath;
     const language = getSupportedLanguageFromPath({ path: path ?? "" });
     if (!language) { return; }
 
+    // for ipynb file, cause we only analyze the code cells, so change the path to a fake py file
+    if (path?.endsWith(".ipynb")) {
+        path = path.replace(/\.ipynb$/, ".py");
+    }
     const analyzer = newAnalyzer({ text, language, absolutePath: path! });
     return analyzer?.analyze();
 }
