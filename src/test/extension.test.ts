@@ -8,6 +8,7 @@ import * as vscode from "vscode";
 import { isSpace, isAlpha } from "../utils/string-utils";
 import { RustAnalyzer } from "../analyzer/rust-analyzer";
 
+// import * as fs from "fs/promises";
 
 suite("Extension Test Suite", () => {
     vscode.window.showInformationMessage("Start all tests.");
@@ -375,4 +376,7 @@ fn issue_13503() {
         assert.strictEqual(result.codes, 31);
         assert.strictEqual(result.comments, 18);
     });
+});
+
+suite("Golang Analyzer Test Suite", () => {
 });
