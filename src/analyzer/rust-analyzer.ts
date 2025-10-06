@@ -113,8 +113,8 @@ export class RustAnalyzer extends Analyzer {
         const offset = this.stringStream.getCurrentOffset();
 
         return line.slice(offset, offset + 2) === 'r"' ||
-            line.slice(offset, offset + 3) === 'r#"';
-
+            line.slice(offset, offset + 3) === 'r#"' ||
+            line.slice(offset, offset + 4) === 'r##"';
     }
 
     skipRawString(): void {
@@ -124,6 +124,8 @@ export class RustAnalyzer extends Analyzer {
         let delimiterLength = 1;
         if (line.slice(offset, offset + 3) === 'r#"') {
             delimiterLength = 2;
+        } else if (line.slice(offset, offset + 4) === 'r##"') {
+            delimiterLength = 3;
         }
 
         // raw string: r"..." or r#"...#", then delimeter either be " or #"

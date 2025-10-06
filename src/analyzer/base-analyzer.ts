@@ -159,14 +159,22 @@ export abstract class Analyzer {
       }
 
       if (!isFoundDelimiter) {
-        // check if the last character is a backslash \
-        if (this.stringStream.getCurrentLine().slice(-1) === "\\") {
-          // wee need to skip the current line and continue to find the end of string in the next line
-          if (this.getLineAndResetOffset() === undefined) {
-            throw new Error("find string closed but EOF");
-          }
-        } else {
-          throw new Error("string not closed");
+        // OLD implementation:
+        // // check if the last character is a backslash \
+        // if (this.stringStream.getCurrentLine().slice(-1) === "\\") {
+        //   // wee need to skip the current line and continue to find the end of string in the next line
+        //   if (this.getLineAndResetOffset() === undefined) {
+        //     throw new Error("find string closed but EOF");
+        //   }
+        // } else {
+        //   throw new Error("string not closed");
+        // }
+
+        // NEW implementation: 
+        // some language support multi-line string(i.e. rust), so we just continue to the next line
+        // until we find the delimiter or EOF
+        if (this.getLineAndResetOffset() === undefined) {
+          throw new Error("find string closed but EOF");
         }
       }
     }
