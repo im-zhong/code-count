@@ -2,10 +2,10 @@
 // zhangzhong
 
 import { FileResult, LineClass } from "../common/types";
-import { BitVector } from "../lib/bit-vector";
-import { LineSpan } from "../lib/line-span";
-import { StringStream } from "../lib/string-stream";
-import { isSpace } from "../lib/string-utils";
+import { BitVector } from "../utils/bit-vector";
+import { LineSpan } from "../utils/line-span";
+import { StringStream } from "../utils/string-stream";
+import { isSpace } from "../utils/string-utils";
 
 export abstract class Analyzer {
   private lineCommentHead: string;
@@ -221,7 +221,8 @@ export abstract class Analyzer {
       }
     }
 
-    this.stringStream.setCurrentOffset(-1);
+    // should skip to the end of the line
+    this.stringStream.setCurrentOffset(this.stringStream.getCurrentLine().length);
     this.setLineClass({
       lineClass: LineClass.LineComment,
     });

@@ -2,7 +2,7 @@
 // zhangzhong
 
 import { LineClass } from "../common/types";
-import { isIdentPart, isIdentStart } from "../lib/string-utils";
+import { isIdentPart, isIdentStart } from "../utils/string-utils";
 
 import { Analyzer } from "./base-analyzer";
 

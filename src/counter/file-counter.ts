@@ -6,7 +6,7 @@ import * as fs from "fs/promises";
 import { newAnalyzer } from "../analyzer/factory";
 import { SupportedLanguage } from "../common/supported-languages";
 import { FileResult } from "../common/types";
-import { printToChannelOutput } from "../lib/output-channel";
+import { printToChannelOutput } from "../utils/output-channel";
 
 export class FileCounter {
   private language: SupportedLanguage;
@@ -34,7 +34,7 @@ export class FileCounter {
         absolutePath: this.absolutePath,
       })?.analyze();
 
-      printToChannelOutput(`End counting: ${this.absolutePath}`);
+      printToChannelOutput(`End counting: ${this.absolutePath} with result: ${JSON.stringify(result)}`);
       return result;
     } catch (error) {
       printToChannelOutput(`Failed counting: ${this.absolutePath}, ${error}`);

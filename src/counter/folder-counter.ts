@@ -4,7 +4,7 @@
 import { SupportedLanguage } from "../common/supported-languages";
 import { FolderResult } from "../common/types";
 import { filterManager } from "../filter/filter-manager";
-import { getLoadingStatusBarItem } from "../lib/loading-status-bar-item";
+import { getLoadingStatusBarItem } from "../utils/loading-status-bar-item";
 
 import { FileCounter } from "./file-counter";
 

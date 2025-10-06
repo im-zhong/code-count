@@ -18,8 +18,8 @@ import {
 import { LineClass, FileResult } from "./common/types";
 import { WorkspaceCounter } from "./counter/workspace-counter";
 import { filterManager } from "./filter/filter-manager";
-import { registerLoadingStatusBarItem } from "./lib/loading-status-bar-item";
-import { activateOutputChannel } from "./lib/output-channel";
+import { registerLoadingStatusBarItem } from "./utils/loading-status-bar-item";
+import { activateOutputChannel } from "./utils/output-channel";
 
 let statusBarItem: vscode.StatusBarItem;
 let workspaceCounter = new WorkspaceCounter();
@@ -266,9 +266,9 @@ const needHandle = async (
   uri: vscode.Uri,
 ): Promise<
   | {
-      workspaceFolder: vscode.WorkspaceFolder;
-      language: SupportedLanguage;
-    }
+    workspaceFolder: vscode.WorkspaceFolder;
+    language: SupportedLanguage;
+  }
   | undefined
 > => {
   // vscode.workspace.name
