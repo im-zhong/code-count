@@ -1,23 +1,35 @@
 // 2025/10/6
 // zhangzhong
 
-
-
 // eslint-disable-next-line import/no-unresolved
 import * as vscode from "vscode";
 
+import { newAnalyzer } from "../analyzer/factory";
 import {
     getIconFromSupportedLanguage,
     getSupportedLanguageFromPath,
 } from "../common/supported-languages";
+import { FileResult } from "../common/types";
 import { WorkspaceCounter } from "../counter/workspace-counter";
 import { getWorkspaceFolderFromUri } from "../utils/file";
 
 import { clearBackground, updateBackground } from "./background";
 
+// we need to analyze the selected text through our analyzer
+// so we need the analyzer factory
+export function getSelectedCodesAndComments({ text }: { text: string }): FileResult | undefined {
+
+    const path = vscode.window.activeTextEditor?.document.uri.fsPath;
+    const language = getSupportedLanguageFromPath({ path: path ?? "" });
+    if (!language) { return; }
+
+    const analyzer = newAnalyzer({ text, language, absolutePath: path! });
+    return analyzer?.analyze();
+}
 
 
-export async function updateStatusBarItem({ workspaceCounter, statusBarItem, backgroundToggle }: { workspaceCounter: WorkspaceCounter, statusBarItem: vscode.StatusBarItem, backgroundToggle: boolean }): Promise<void> {
+// 可以在这里再加上一个字段，表示selected text
+export async function updateStatusBarItem({ workspaceCounter, statusBarItem, backgroundToggle, selectedText }: { workspaceCounter: WorkspaceCounter, statusBarItem: vscode.StatusBarItem, backgroundToggle: boolean, selectedText: string | undefined }): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
         statusBarItem.hide();
@@ -56,7 +68,14 @@ export async function updateStatusBarItem({ workspaceCounter, statusBarItem, bac
             language,
         });
 
-    statusBarItem.text = `$(${getIconFromSupportedLanguage({ language })}) Codes: ${fileResult.codes}/${totalCodes}, Annos: ${fileResult.comments}/${totalComments}`;
+    if (selectedText && selectedText.length > 0) {
+        const selectedResult = getSelectedCodesAndComments({ text: selectedText });
+        if (selectedResult) {
+            statusBarItem.text = `$(${getIconFromSupportedLanguage({ language })}) Selected Codes: ${selectedResult.codes}, Annos: ${selectedResult.comments}`;
+        }
+    } else {
+        statusBarItem.text = `$(${getIconFromSupportedLanguage({ language })}) Codes: ${fileResult.codes}/${totalCodes}, Annos: ${fileResult.comments}/${totalComments}`;
+    }
     statusBarItem.show();
 
     clearBackground({ editor });

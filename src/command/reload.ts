@@ -52,7 +52,7 @@ export async function reload({
     // setTimeout(() => {
     //     statusBarItem.hide();
     // }, 3000);
-    await updateStatusBarItem({ workspaceCounter, statusBarItem, backgroundToggle });
+    await updateStatusBarItem({ workspaceCounter, statusBarItem, backgroundToggle, selectedText: undefined });
     vscode.window.showInformationMessage("Code Counter Reloaded.");
 
     isReloading = false;

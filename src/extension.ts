@@ -40,7 +40,7 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
   subscriptions.push(
     vscode.commands.registerCommand(commandId, () => {
       backgroundToggle = !backgroundToggle;
-      updateStatusBarItem({ workspaceCounter, statusBarItem, backgroundToggle });
+      updateStatusBarItem({ workspaceCounter, statusBarItem, backgroundToggle, selectedText: undefined });
     }),
   );
 
@@ -97,7 +97,7 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
         if (textEditor) {
           await lookFile(textEditor.document.uri);
         }
-        await updateStatusBarItem({ workspaceCounter, statusBarItem, backgroundToggle });
+        await updateStatusBarItem({ workspaceCounter, statusBarItem, backgroundToggle, selectedText: undefined });
       },
     ),
   );
@@ -107,7 +107,7 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
       if (notebookEditor) {
         await lookFile(notebookEditor.notebook.uri);
       }
-      await updateStatusBarItem({ workspaceCounter, statusBarItem, backgroundToggle });
+      await updateStatusBarItem({ workspaceCounter, statusBarItem, backgroundToggle, selectedText: undefined });
     },
   );
 
@@ -121,7 +121,7 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
     vscode.workspace.onDidSaveTextDocument(
       async (document: vscode.TextDocument) => {
         await saveFile(document.uri);
-        await updateStatusBarItem({ workspaceCounter, statusBarItem, backgroundToggle });
+        await updateStatusBarItem({ workspaceCounter, statusBarItem, backgroundToggle, selectedText: undefined });
       },
     ),
   );
@@ -129,14 +129,14 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
     vscode.workspace.onDidSaveNotebookDocument(
       async (document: vscode.NotebookDocument) => {
         await saveFile(document.uri);
-        await updateStatusBarItem({ workspaceCounter, statusBarItem, backgroundToggle });
+        await updateStatusBarItem({ workspaceCounter, statusBarItem, backgroundToggle, selectedText: undefined });
       },
     ),
   );
 
   // The vscode.workspace.onDidRenameFiles event is triggered in Visual Studio Code when one or more files in the workspace are renamed.
   // This includes scenarios such as:
-  // - Manual Rename
+  // - Manual Rename 
   // - Programmatic Rename
   subscriptions.push(
     vscode.workspace.onDidRenameFiles(async (event: vscode.FileRenameEvent) => {
@@ -158,6 +158,40 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
       });
     }),
   );
+
+  let selectionTimer: NodeJS.Timeout | undefined;
+
+  // An Event which fires when the selection in an editor has changed.
+  subscriptions.push(
+    vscode.window.onDidChangeTextEditorSelection(
+      async (event: vscode.TextEditorSelectionChangeEvent) => {
+        // only when user select multiple lines, we will show the selected codes and comments
+        if (event.selections.length > 0 && !event.selections[0].isEmpty && !event.selections[0].isSingleLine) {
+          await updateStatusBarItem({
+            workspaceCounter, statusBarItem, backgroundToggle,
+            selectedText: getSelectedFullLines({ editor: event.textEditor, selections: event.selections })
+          });
+        } else {
+          await updateStatusBarItem({
+            workspaceCounter, statusBarItem, backgroundToggle, selectedText: undefined
+          });
+        }
+      }
+    ));
+
+  // TODO: 先不实现notebook了
+  // An Event which fires when the notebook editor selections have changed.
+  // subscriptions.push(
+  //   vscode.window.onDidChangeNotebookEditorSelection(
+  //     async (event: vscode.NotebookEditorSelectionChangeEvent) => {
+
+
+  //       if (event.notebookEditor === vscode.window.activeNotebookEditor) {
+  //         await updateStatusBarItem({ workspaceCounter, statusBarItem, backgroundToggle, selectedText: getSelectedFullLines({ editor: event.notebookEditor, selections: event.selections }) });
+  //       }
+  //     },
+  //   ),
+  // );
 }
 
 const lookFile = async (uri: vscode.Uri) => {
@@ -241,7 +275,6 @@ const deleteFile = async (uri: vscode.Uri) => {
 };
 
 
-
 const needHandle = async (
   uri: vscode.Uri,
 ): Promise<
@@ -281,4 +314,20 @@ const needHandle = async (
 
   return { workspaceFolder, language };
 };
+
+
+function getSelectedFullLines({ editor, selections }: { editor: vscode.TextEditor, selections: readonly vscode.Selection[] }): string | undefined {
+  const document = editor.document;
+  const lines = [];
+  for (const selection of selections) {
+    for (let i = selection.start.line; i <= selection.end.line; i++) {
+      lines.push(document.lineAt(i).text);
+    }
+  }
+
+  return lines.join('\n');
+}
+
+
+
 
