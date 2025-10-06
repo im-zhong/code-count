@@ -21,6 +21,12 @@ Inspired by linux cli tool **wc**, instead of counting words, this tool will **l
 
 ![example](assets/example2.png)
 
+### 0.6.0
+
+1. Add new language support: Rust, Golang, SQL, Shell(Bash and Zsh), Java.
+2. Add Reload command: it will re-count all files in the project.
+3. Add a new feature: it will display selected codes and comments count in the status bar when you select some texts in the editor.
+
 ### 0.5.3
 
 1. add support for C#
@@ -74,11 +80,7 @@ Initial release of code count tool, support
 
 ## TODO
 
-* [ ] add a new command to generate a report of the whole project
-* [ ] add support for golang
-* [ ] add support for rust
 * [ ] maybe change the example images in readme
-* [ ] when open a file that is not in the supported language, do not remove the status bar item, just show that current line of code is zero.
 
 ---
 
