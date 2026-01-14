@@ -81,6 +81,7 @@ Initial release of code count tool, support
 ## TODO
 
 * [ ] maybe change the example images in readme
+* [ ] the repo count command should generate a tree of folders, that I could check the code in each folder.
 
 ---
 
